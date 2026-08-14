@@ -1,0 +1,37 @@
+# Test-only composition: the vision bridge repairing a text-only chat route
+# through its real Loader/app path.
+- id: vision-bridge-mock-llm
+  name: './vision-bridge-mock-llm.ts'
+
+# Managed child-process groups for the bash executor (spawn/kill/output plumbing).
+- id: subprocess
+  name: '@deepseek-ai/dsh-subprocess-local'
+
+- id: bash
+  name: '@deepseek-ai/dsh-bash-local'
+
+- id: vision-bridge
+  name: '@deepseek-ai/dsh-vision-bridge'
+  config:
+    provider: vb-vision
+    model: vision-mock
+
+- id: agent-spine
+  name: '@deepseek-ai/dsh-agent-spine-demo'
+  config:
+    agents:
+      - id: main
+        provider: vb-chat
+        model: text-only
+        cwd: !!js process.cwd()
+    persona: 'Test the vision-bridge plugin.'
+    workspaceContext: false
+
+- id: persistence
+  name: '@deepseek-ai/dsh-session-persistence-jsonl'
+  config:
+    root: './.sessions'
+    compression: 'none'
+
+- id: checkpoint-policy
+  name: '@deepseek-ai/dsh-session-checkpoint-policy'

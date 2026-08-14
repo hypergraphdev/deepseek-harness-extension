@@ -495,7 +495,7 @@ interface GenerateOptions {
    * map the purpose to model-hidden transport metadata or purpose-specific
    * generation policy. Ordinary conversation requests leave it unset.
    */
-  purpose?: 'compaction' | 'session-title'
+  purpose?: 'compaction' | 'session-title' | 'vision-bridge'
 }
 ```
 
@@ -836,6 +836,33 @@ stream(options: GenerateOptions): AsyncIterable<StreamChunk>
 ```
 
 Source: [`packages/llm/llm/src/index.ts:284`](../../packages/llm/llm/src/index.ts)
+
+<a id="ctxvisionbridge--visionbridge"></a>
+
+### `ctx.visionBridge` — `VisionBridge`
+
+Owns the bridge route and the transcription flow. The composition entry remains usable without a settings provider; when one is mounted, the `vision-bridge:` section is read live and toggles the `analyze_image` tool with the route.
+
+```ts cordis-catalog
+/**
+ * Read the currently configured bridge route.
+ * @returns the provider/model pair, or undefined while the bridge is dormant.
+ */
+route(): VisionBridgeRoute | undefined
+
+/**
+ * Transcribe one image through the configured vision route.
+ * @param image - the image block to describe; bytes resolve through the attachment service at the adapter.
+ * @param instruction - the transcription instruction; the configured prompt when undefined.
+ * @param context - the requesting session id and cancellation signal.
+ * @returns the non-empty transcription text.
+ */
+async describe( image: ImageBlock, instruction: string | undefined, context: { sessionId?: Session['id']; signal?: AbortSignal }, ): Promise<string>
+```
+
+Types: [Session](session.md)
+
+Source: [`packages/llm/vision-bridge/src/index.ts:153`](../../packages/llm/vision-bridge/src/index.ts)
 
 <a id="llm-events"></a>
 

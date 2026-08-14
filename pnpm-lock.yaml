@@ -446,6 +446,9 @@ importers:
       '@deepseek-ai/dsh-app-boot':
         specifier: workspace:*
         version: link:../packages/boot/app-boot
+      '@deepseek-ai/dsh-attachment':
+        specifier: workspace:*
+        version: link:../packages/attachment/attachment
       '@deepseek-ai/dsh-attachment-local':
         specifier: workspace:*
         version: link:../packages/attachment/attachment-local
@@ -731,6 +734,9 @@ importers:
       '@deepseek-ai/dsh-user-questions':
         specifier: workspace:*
         version: link:../packages/interaction/user-questions
+      '@deepseek-ai/dsh-vision-bridge':
+        specifier: workspace:*
+        version: link:../packages/llm/vision-bridge
       '@deepseek-ai/dsh-web':
         specifier: workspace:*
         version: link:../packages/web/web
@@ -1202,6 +1208,9 @@ importers:
       '@deepseek-ai/dsh-user-questions':
         specifier: workspace:^
         version: link:../../interaction/user-questions
+      '@deepseek-ai/dsh-vision-bridge':
+        specifier: workspace:^
+        version: link:../../llm/vision-bridge
       '@deepseek-ai/dsh-web':
         specifier: workspace:^
         version: link:../../web/web
@@ -4770,6 +4779,9 @@ importers:
       '@deepseek-ai/dsh-user-questions':
         specifier: workspace:^
         version: link:../../interaction/user-questions
+      '@deepseek-ai/dsh-vision-bridge':
+        specifier: workspace:^
+        version: link:../../llm/vision-bridge
       '@deepseek-ai/dsh-workspace':
         specifier: workspace:^
         version: link:../../workspace/workspace
@@ -5365,6 +5377,46 @@ importers:
       '@deepseek-ai/dsh-session-projection':
         specifier: workspace:^
         version: link:../../session/session-projection
+
+  packages/llm/vision-bridge:
+    dependencies:
+      '@deepseek-ai/schemastery':
+        specifier: link:../../../vendor/schemastery
+        version: link:../../../vendor/schemastery
+    devDependencies:
+      '@deepseek-ai/cordis':
+        specifier: workspace:^
+        version: link:../../../vendor/cordis
+      '@deepseek-ai/dsh-agent':
+        specifier: workspace:^
+        version: link:../../core/agent
+      '@deepseek-ai/dsh-agent-loop':
+        specifier: workspace:^
+        version: link:../../core/agent-loop
+      '@deepseek-ai/dsh-agent-loop-testkit':
+        specifier: workspace:^
+        version: link:../../test-support/agent-loop-testkit
+      '@deepseek-ai/dsh-attachment':
+        specifier: workspace:^
+        version: link:../../attachment/attachment
+      '@deepseek-ai/dsh-invariants':
+        specifier: workspace:^
+        version: link:../../runtime-diagnostics/invariants
+      '@deepseek-ai/dsh-llm':
+        specifier: workspace:^
+        version: link:../llm
+      '@deepseek-ai/dsh-loader-smoke':
+        specifier: workspace:^
+        version: link:../../test-support/loader-smoke
+      '@deepseek-ai/dsh-session':
+        specifier: workspace:^
+        version: link:../../core/session
+      '@deepseek-ai/dsh-settings':
+        specifier: workspace:^
+        version: link:../../settings/settings
+      '@deepseek-ai/dsh-tools':
+        specifier: workspace:^
+        version: link:../../core/tools
 
   packages/lsp/lsp:
     devDependencies:

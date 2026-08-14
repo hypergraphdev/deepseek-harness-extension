@@ -340,6 +340,14 @@ const SERVICE_ROLES: ServiceRole[] = [
     note: 'Layers the default ModelSelection through settings so direct and Host-backed Agent entry points share one state owner.',
   },
   {
+    key: 'visionBridge',
+    pkg: 'vision-bridge',
+    title: 'Image transcription for text-only model routes',
+    mode: 'core',
+    consumers: ['host-apiproxy'],
+    note: 'Repairs UNSUPPORTED_CONTENT steps by transcribing logged images through a configured multimodal route; the host consults it to admit images on text-only routes.',
+  },
+  {
     key: 'agentLoop',
     pkg: 'agent-loop',
     title: 'Concrete loop driver',

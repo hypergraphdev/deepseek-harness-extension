@@ -89,6 +89,9 @@ import type { ApprovalOutcome, ApprovalRequestId } from '@deepseek-ai/dsh-user-a
 // Side-effect type import: resolves the `approval/request` waterfall and
 // `ctx.get('approval')` without a value dependency on the seam (optional composition).
 import type {} from '@deepseek-ai/dsh-user-approval'
+// Type-only: resolves `ctx.get('visionBridge')`; a configured bridge admits
+// images on text-only routes by transcribing them at request time.
+import type {} from '@deepseek-ai/dsh-vision-bridge'
 import { approvalResponsePayloadSchema } from './api/approvals.schema.ts'
 import { imageLimitsProjectionSchema, sessionListMetadataProjectionSchema } from './api/sessions.schema.ts'
 import { questionResponsePayloadSchema } from './api/questions.schema.ts'
@@ -2296,7 +2299,8 @@ export function createApiProxy(ctx: Context, defaults: ApiProxyDefaults): ApiPro
               .some(message => contentHasImage(message.content))
             if (pendingImage || messagesHaveImage(found.agent.session.deriveMessages())) {
               const info = await ctx.llm.resolveModelInfo(resolved.provider, resolved.model)
-              if (info.inputModalities !== undefined && !info.inputModalities.includes('image')) {
+              if (info.inputModalities !== undefined && !info.inputModalities.includes('image')
+                && ctx.get('visionBridge')?.route() === undefined) {
                 return err(request, {
                   code: 'model-unavailable',
                   message: `Model "${resolved.model}" does not accept image input, but this session already contains images; select an image-capable model.`,
@@ -2485,7 +2489,8 @@ export function createApiProxy(ctx: Context, defaults: ApiProxyDefaults): ApiPro
             if (hasImage) {
               const current = selectionFor(agent).current
               const modelInfo = await ctx.llm.resolveModelInfo(current.provider, current.model)
-              if (modelInfo.inputModalities !== undefined && !modelInfo.inputModalities.includes('image')) {
+              if (modelInfo.inputModalities !== undefined && !modelInfo.inputModalities.includes('image')
+                && ctx.get('visionBridge')?.route() === undefined) {
                 return err(request, {
                   code: 'attachment-error',
                   message: `Model "${current.model}" does not support image input.`,

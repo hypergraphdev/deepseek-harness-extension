@@ -930,6 +930,25 @@ Source: [`packages/core/session/src/types.ts:243`](../packages/core/session/src/
 
 Source: [`packages/core/session/src/types.ts:264`](../packages/core/session/src/types.ts)
 
+### `vision-bridge/*`
+
+<a id="vision-bridgecaption--log-only"></a>
+
+#### `vision-bridge/caption` — log-only
+
+```ts persistence-catalog
+/**
+ * One image transcription produced by the vision bridge while repairing a
+ * text-only model request: the transcribed attachment, the vision route
+ * that produced the text, and the transcription itself. Log-only
+ * provenance beside the replacement `user/message` node that carries the
+ * same text into the model surface.
+ */
+'vision-bridge/caption': VisionBridgeCaption
+```
+
+Source: [`packages/llm/vision-bridge/src/index.ts:42`](../packages/llm/vision-bridge/src/index.ts)
+
 ### `web/*`
 
 <a id="webdeepseek-search-llm-request--log-only"></a>

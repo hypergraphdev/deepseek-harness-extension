@@ -2024,6 +2024,25 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
     ],
   },
   {
+    key: 'visionBridge',
+    summary: 'Owns the bridge route and the transcription flow.',
+    description: 'Owns the bridge route and the transcription flow. The composition entry remains usable without a settings provider; when one is mounted, the `vision-bridge:` section is read live and toggles the `analyze_image` tool with the route.',
+    methods: [
+      {
+        signature: 'route(): VisionBridgeRoute | undefined',
+        description: 'Read the currently configured bridge route.',
+        parameters: [],
+        returns: 'the provider/model pair, or undefined while the bridge is dormant.',
+      },
+      {
+        signature: 'async describe( image: ImageBlock, instruction: string | undefined, context: { sessionId?: Session[\'id\']; signal?: AbortSignal }, ): Promise<string>',
+        description: 'Transcribe one image through the configured vision route.',
+        parameters: [{ name: 'image', description: 'the image block to describe; bytes resolve through the attachment service at the adapter.' }, { name: 'instruction', description: 'the transcription instruction; the configured prompt when undefined.' }, { name: 'context', description: 'the requesting session id and cancellation signal.' }],
+        returns: 'the non-empty transcription text.',
+      },
+    ],
+  },
+  {
     key: 'web',
     summary: 'The web access service.',
     description: 'The web access service. Registered as `ctx.web` (one instance per context).\n\nSelection semantics (resolved at execution time, never order-dependent):\n\n- A configured id that is registered and `available()` → that provider.\n- A configured id not registered → `WEB_PROVIDER_CONFIGURED_MISSING`.\n- A configured id registered but unavailable → `WEB_PROVIDER_CONFIGURED_UNAVAILABLE`.\n- No id configured, exactly one registered usable provider → that provider.\n- No id configured, multiple usable providers → `WEB_PROVIDER_AMBIGUOUS`.\n- No id configured, no usable provider → `WEB_PROVIDER_UNAVAILABLE`.',
@@ -3091,7 +3110,7 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   },
   {
     name: 'GenerateOptions',
-    declaration: 'export interface GenerateOptions {\n    provider: string;\n    model: string;\n    reasoningEffort?: ReasoningEffortId;\n    messages: Message[];\n    system?: string;\n    tools?: ToolSchema[];\n    temperature?: number;\n    maxTokens?: number;\n    stop?: string[];\n    signal?: AbortSignal;\n    sessionId?: Branded<\'SessionId\'>;\n    purpose?: \'compaction\' | \'session-title\';\n}',
+    declaration: 'export interface GenerateOptions {\n    provider: string;\n    model: string;\n    reasoningEffort?: ReasoningEffortId;\n    messages: Message[];\n    system?: string;\n    tools?: ToolSchema[];\n    temperature?: number;\n    maxTokens?: number;\n    stop?: string[];\n    signal?: AbortSignal;\n    sessionId?: Branded<\'SessionId\'>;\n    purpose?: \'compaction\' | \'session-title\' | \'vision-bridge\';\n}',
   },
   {
     name: 'GenericCallView',
@@ -4528,6 +4547,10 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'UserQuestionProvider',
     declaration: 'export interface UserQuestionProvider {\n    ask(request: AskUserQuestionRequest): Promise<AskUserQuestionAnswer>;\n}',
+  },
+  {
+    name: 'VisionBridgeRoute',
+    declaration: 'export interface VisionBridgeRoute {\n    provider: string;\n    model: string;\n}',
   },
   {
     name: 'WebBootEntry',

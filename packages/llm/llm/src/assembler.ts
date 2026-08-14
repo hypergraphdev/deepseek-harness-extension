@@ -162,3 +162,29 @@ export class BlockAssembler {
     return createMessage({ role: 'assistant', content: this.blocks(), source })
   }
 }
+
+/**
+ * Map a terminal finish reason from an assembled auxiliary stream to the error
+ * it represents. Shared by every one-shot consumer (compaction summarization,
+ * vision-bridge transcription) so fail-closed semantics cannot drift.
+ * @param finish - the assembled stream's finish reason.
+ * @param truncationMessage - the caller-specific message for a `max-tokens` cut (code `MAX_TOKENS`).
+ * @returns the error to raise, or undefined for a clean stop.
+ */
+export function finishReasonError(finish: FinishReason, truncationMessage: string): Error | undefined {
+  switch (finish.kind) {
+    case 'error':
+    case 'aborted': {
+      const error = new Error(finish.failure.message) as Error & { code?: string }
+      error.code = finish.failure.code
+      return error
+    }
+    case 'max-tokens': {
+      const error = new Error(truncationMessage) as Error & { code?: string }
+      error.code = 'MAX_TOKENS'
+      return error
+    }
+    default:
+      return undefined
+  }
+}

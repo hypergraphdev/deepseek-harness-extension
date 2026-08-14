@@ -95,6 +95,13 @@
     - id: llm-pi-ai
       name: '@deepseek-ai/dsh-llm-pi-ai'
 
+    # Vision bridge, mounted dormant like the pi-ai twin above: no route (image
+    # admission and the analyze_image tool stay off) until a `vision-bridge:`
+    # settings section names a multimodal provider/model pair. With a route,
+    # text-only models converse over images through logged transcriptions.
+    - id: vision-bridge
+      name: '@deepseek-ai/dsh-vision-bridge'
+
     - id: session-persistence-jsonl
       name: '@deepseek-ai/dsh-session-persistence-jsonl'
       config:

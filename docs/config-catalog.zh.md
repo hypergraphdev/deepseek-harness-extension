@@ -2845,6 +2845,36 @@ export type ApprovalPolicy = 'ask' | 'never'
 
 来源：[`packages/interaction/user-approval/src/index.ts:177`](../packages/interaction/user-approval/src/index.ts)
 
+<a id="deepseek-aidsh-vision-bridge"></a>
+
+## `@deepseek-ai/dsh-vision-bridge`
+
+依赖：`llm`
+
+```ts config-catalog
+/**
+ * Bridge configuration: the vision route plus the transcription request
+ * envelope. `provider` and `model` must be set together; with neither set the
+ * bridge stays dormant and every image-capability refusal keeps its current
+ * behavior.
+ */
+export interface Config {
+  /** Registered provider route serving the vision model. */
+  provider?: string
+  /** Provider-owned vision model id. */
+  model?: string
+  /**
+   * Transcription instruction sent beside each image (default asks for a
+   * detailed description with exact text transcription).
+   */
+  prompt?: string
+  /** Output cap for one transcription request (default 1024). */
+  maxTokens?: number
+}
+```
+
+来源：[`packages/llm/vision-bridge/src/index.ts:67`](../packages/llm/vision-bridge/src/index.ts)
+
 <a id="deepseek-aidsh-web"></a>
 
 ## `@deepseek-ai/dsh-web`

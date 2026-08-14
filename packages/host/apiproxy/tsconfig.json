@@ -84,6 +84,9 @@
       "path": "../../interaction/user-approval"
     },
     {
+      "path": "../../llm/vision-bridge"
+    },
+    {
       "path": "../../interaction/user-questions"
     },
     {
