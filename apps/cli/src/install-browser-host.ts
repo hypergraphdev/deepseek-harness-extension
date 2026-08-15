@@ -33,6 +33,12 @@ const DARWIN_MANIFEST_DIRS: Readonly<Record<string, readonly string[]>> = {
  * executable path; npm's extensionless `.bin` shims are not reliably
  * spawnable, so the shim pins the current Node binary, this entry's runtime
  * flags (the tsx hook for source launches), and this entry's absolute path.
+ * A source entry (`.ts`) additionally enters the repository root first: the
+ * browser spawns the shim from its own working directory, while the tsx
+ * hook's bare `--import` specifier and the workspace tsconfig `paths` that
+ * map `@deepseek-ai/*` packages to source both resolve from the working
+ * directory. Built entries carry their resolution context in their own
+ * `node_modules` and need no directory change.
  * @param execPath - absolute Node binary path.
  * @param execArgv - runtime flags the entry was launched with.
  * @param binPath - absolute path of the dsh entry script.
@@ -41,7 +47,10 @@ const DARWIN_MANIFEST_DIRS: Readonly<Record<string, readonly string[]>> = {
  */
 export function shimScript(execPath: string, execArgv: readonly string[], binPath: string, port: number): string {
   const flags = execArgv.map(flag => ` ${JSON.stringify(flag)}`).join('')
-  return `#!/bin/sh\nexec ${JSON.stringify(execPath)}${flags} ${JSON.stringify(binPath)} browser-host --port ${String(port)} "$@"\n`
+  const enter = binPath.endsWith('.ts')
+    ? `cd ${JSON.stringify(join(dirname(binPath), '..', '..', '..'))} || exit 1\n`
+    : ''
+  return `#!/bin/sh\n${enter}exec ${JSON.stringify(execPath)}${flags} ${JSON.stringify(binPath)} browser-host --port ${String(port)} "$@"\n`
 }
 
 /**

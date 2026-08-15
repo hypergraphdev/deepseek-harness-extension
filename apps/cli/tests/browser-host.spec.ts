@@ -128,8 +128,15 @@ describe('ensureWebServer', () => {
 
 describe('installer artifacts', () => {
   it('pins node, runtime flags, and the entry path into the shim', () => {
-    const shim = shimScript('/usr/local/bin/node', ['--import', 'tsx/esm'], '/repo/apps/cli/src/bin.ts', 3080)
+    const shim = shimScript('/usr/local/bin/node', [], '/opt/dsh/lib/bin.js', 3080)
     expect(shim.startsWith('#!/bin/sh\n')).toBe(true)
+    expect(shim).not.toContain('cd ')
+    expect(shim).toContain('"/usr/local/bin/node" "/opt/dsh/lib/bin.js" browser-host --port 3080 "$@"')
+  })
+
+  it('enters the repository root before a source entry, where cwd-resolved tsx flags and tsconfig paths hold', () => {
+    const shim = shimScript('/usr/local/bin/node', ['--import', 'tsx/esm'], '/repo/apps/cli/src/bin.ts', 3080)
+    expect(shim).toContain('cd "/repo" || exit 1\n')
     expect(shim).toContain('"/usr/local/bin/node" "--import" "tsx/esm" "/repo/apps/cli/src/bin.ts" browser-host --port 3080 "$@"')
   })
 
