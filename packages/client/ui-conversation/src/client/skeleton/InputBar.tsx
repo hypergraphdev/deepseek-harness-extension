@@ -25,6 +25,7 @@ import type {} from '@deepseek-ai/dsh-goal/client'
 import type { Translate } from '@deepseek-ai/dsh-client-ui-slots'
 import type { ComposerAttachment, ComposerBarProps } from '../contract/slots.ts'
 import { deriveDecorations } from '../input/decorations.ts'
+import { useDictation } from '../input/dictation.ts'
 import type { DraftDecorations } from '../input/decorations.ts'
 import {
   attachmentErrorText, attachmentRailLabels, dropOverlayLabels, imageSizeText, lightboxLabels,
@@ -507,6 +508,27 @@ export function InputBar({
 
   const closePreview = useCallback(() => { setPreview(null) }, [])
 
+  // Dictation appends each finalized segment at the draft's end through the
+  // machine (never the DOM), separated from existing text by one space.
+  const appendDictation = useCallback((text: string): void => {
+    if (keyboard === undefined || machineBusy || locked) return
+    const base = keyboard.snapshot.draft
+    const next = base === '' || /\s$/.test(base) ? base + text : `${base} ${text}`
+    keyboard.setDraft(next)
+    keyboard.track(next, next.length)
+    const el = inputRef.current
+    if (el !== null) restoreCaret(el, next.length)
+  }, [keyboard, machineBusy, locked])
+  const announceDictation = useCallback((failure: 'denied' | 'error'): void => {
+    showToast(t(failure === 'denied' ? 'input.voiceDenied' : 'input.voiceError'))
+  }, [showToast, t])
+  const dictation = useDictation(appendDictation, announceDictation)
+  const dictationLabel = dictation.listening ? t('input.voiceStop') : t('input.voiceStart')
+  // A session that locks mid-dictation (removal, submit lock) ends listening.
+  useEffect(() => {
+    if (locked) dictation.stop()
+  }, [locked, dictation])
+
   // Rail thumbnails with their strings resolved here: the attachment atoms are
   // zero-cordis and read no locale.
   const railItems = useMemo<ComposerRailItem[]>(() => attachments.map(attachment => ({
@@ -745,6 +767,24 @@ export function InputBar({
                 <IconPlusOutline16 size={14} />
               </button>
             </Tooltip>
+            {dictation.supported && (
+              <Tooltip label={dictationLabel} side="top" delayMs={500}>
+                <button
+                  type="button"
+                  className={clsx(css.add, dictation.listening && css.micActive)}
+                  aria-label={dictationLabel}
+                  aria-pressed={dictation.listening}
+                  disabled={locked || machineBusy}
+                  onMouseDown={keepFocus}
+                  onClick={dictation.toggle}
+                >
+                  <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden>
+                    <path d="M8 1a2.5 2.5 0 0 1 2.5 2.5v4a2.5 2.5 0 0 1-5 0v-4A2.5 2.5 0 0 1 8 1Z" fill="currentColor" />
+                    <path d="M3.5 7.5a.75.75 0 0 1 1.5 0 3 3 0 0 0 6 0 .75.75 0 0 1 1.5 0 4.5 4.5 0 0 1-3.75 4.437V14h1.5a.75.75 0 0 1 0 1.5h-4.5a.75.75 0 0 1 0-1.5h1.5v-2.063A4.5 4.5 0 0 1 3.5 7.5Z" fill="currentColor" />
+                  </svg>
+                </button>
+              </Tooltip>
+            )}
             <div className={css.modes}>
               {accessSelect}
               {renderSlot('conversation.input.plan', { locked })}

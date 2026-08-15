@@ -474,3 +474,15 @@
   text-decoration: line-through;
   opacity: 0.7;
 }
+
+.micActive,
+.micActive:hover:not(:disabled) {
+  color: #e5484d;
+  animation: micPulse 1.2s ease-in-out infinite;
+}
+
+@keyframes micPulse {
+  50% {
+    opacity: 0.55;
+  }
+}
