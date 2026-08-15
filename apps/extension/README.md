@@ -37,4 +37,19 @@ Pages whose numbers live in a chart's own stream rather than the DOM need a site
 }
 ```
 
-`site-adapters.json` is git-ignored. The engine itself knows no sites; without the file, capture stays reading-mode only.
+#### Streamed data (`sniff`)
+
+A chart that pushes its series over the page's own WebSocket puts nothing in the DOM, so no request can fetch it. Such an adapter sets `"sniff": true` and lists the hosts to observe:
+
+```jsonc
+{
+  "name": "my-chart",
+  "match": "(^|\\.)example\\.com$",
+  "sniff": true,
+  "sniffMatches": ["https://*.example.com/*"]
+}
+```
+
+The background worker then registers `stream-sniffer.js` as a MAIN-world content script at `document_start` for those hosts only — early enough to wrap `window.WebSocket` before the page opens one. It reads frames as they pass and never modifies, blocks, or sends any; the decoded series waits on `window.__dshStream` until a capture reads it. Reload the extension after editing the file so the registration follows, and open the chart before capturing: the sniffer only sees frames that arrive while it is installed. The frame format it decodes is TradingView's; another stream shape needs its own sniffer.
+
+`site-adapters.json` is git-ignored. The engine itself knows no sites; without the file, capture stays reading-mode only and no page script is ever registered.

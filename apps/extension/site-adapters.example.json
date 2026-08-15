@@ -22,11 +22,10 @@
     "note": "Daily candles as a compact string: date,open,high,low,close,volume,amount per row. The hs_ prefix covers Shanghai and Shenzhen; other boards need their own adapter entry."
   },
   {
-    "name": "tradingview-symbol",
+    "name": "tradingview-chart",
     "match": "(^|\\.)tradingview\\.com$",
-    "capture": {
-      "symbol": { "from": "url", "pattern": "symbol=([^&]+)", "group": 1 }
-    },
-    "note": "TradingView streams its candles over an in-page WebSocket, so no HTTP request can fetch them. Without a `request` this adapter reports the charted symbol only; route it to a data source you can query (for example the binance adapter's endpoint) if you need the series."
+    "sniff": true,
+    "sniffMatches": ["https://*.tradingview.com/*"],
+    "note": "TradingView streams its candles over the page's own WebSocket, so no HTTP request can fetch them. `sniff` registers the MAIN-world stream sniffer for the hosts in sniffMatches, which reads the frames the chart is already receiving; capture then reports the charted symbol and its newest bars. Open the chart first — the sniffer only sees what arrives after the page loads."
   }
 ]

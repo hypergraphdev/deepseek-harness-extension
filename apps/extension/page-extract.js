@@ -249,6 +249,23 @@ async function readSiteData(adapters) {
     values[key] = value
   }
 
+  // `sniff` adapters read what the page's own stream carried, published by
+  // the MAIN-world sniffer the panel registered for this host.
+  if (adapter.sniff === true) {
+    const stream = window.wrappedJSObject?.__dshStream ?? window.__dshStream
+    if (stream === undefined) {
+      return { adapter: adapter.name, values, error: 'no stream captured yet; open the chart and retry' }
+    }
+    return {
+      adapter: adapter.name,
+      values,
+      symbol: stream.symbol,
+      barCount: stream.bars.length,
+      // Newest window only: a chart holds far more than one prompt should.
+      bars: stream.bars.slice(-200),
+    }
+  }
+
   if (typeof adapter.request !== 'string') {
     return { adapter: adapter.name, values }
   }
