@@ -78,17 +78,23 @@ export function apply(ctx: Context, config: Config): void {
           provider: config.provider ?? fallback?.provider,
           model: config.model ?? fallback?.model,
         }
-        const handle = await agentCtx.agents.create({
-          sessionId: SessionId(config.sessionId ?? 'weixin-main'),
-          meta: { cwd: process.cwd() },
+        // A fixed session id outlives the process, and the persistence layer
+        // refuses to create over an existing log — so resume when one is
+        // already on disk and create only the first time.
+        const sessionId = SessionId(config.sessionId ?? 'weixin-main')
+        const persisted = await agentCtx.get('sessionPersistence')?.inspect(sessionId).catch(() => undefined)
+        const shared = {
           ...(options.provider === undefined || options.model === undefined
             ? {}
             : { agentOptions: { provider: options.provider, model: options.model } }),
-          setup: (world) => {
+          setup: (world: Context) => {
             if (world.get('systemPrompt') === undefined) return
             world.systemPrompt.section({ name: 'weixin:persona', order: 0, text: WEIXIN_PERSONA })
           },
-        })
+        }
+        const handle = persisted === undefined
+          ? await agentCtx.agents.create({ sessionId, meta: { cwd: process.cwd() }, ...shared })
+          : await agentCtx.agents.resume({ resumeSessionId: sessionId, ...shared })
         if (cancelled) { await handle.dispose(); return }
         agent = handle.agent
         session = handle.agent.session

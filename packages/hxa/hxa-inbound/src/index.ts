@@ -212,18 +212,23 @@ export function apply(ctx: Context, config: Config): void {
           provider: config.provider ?? fallback?.provider,
           model: config.model ?? fallback?.model,
         }
-        const handle = await agentCtx.agents.create({
-          sessionId: SessionId(config.sessionId ?? 'hxa-main'),
-          meta: { cwd: process.cwd() },
+        // A fixed session id outlives the process, and the persistence layer
+        // refuses to create over an existing log — so resume when one is
+        // already on disk and create only the first time.
+        const sessionId = SessionId(config.sessionId ?? 'hxa-main')
+        const persisted = await agentCtx.get('sessionPersistence')?.inspect(sessionId).catch(() => undefined)
+        const shared = {
           ...(agentOptions.provider === undefined || agentOptions.model === undefined
             ? {}
             : { agentOptions: { provider: agentOptions.provider, model: agentOptions.model } }),
-          // Give this agent the coordinator persona, scoped to its own world.
-          setup: (world) => {
+          setup: (world: Context) => {
             if (world.get('systemPrompt') === undefined) return
             world.systemPrompt.section({ name: 'hxa:coordinator', order: 0, text: COORDINATOR_PERSONA })
           },
-        })
+        }
+        const handle = persisted === undefined
+          ? await agentCtx.agents.create({ sessionId, meta: { cwd: process.cwd() }, ...shared })
+          : await agentCtx.agents.resume({ resumeSessionId: sessionId, ...shared })
         if (cancelled) { await handle.dispose(); return }
         agent = handle.agent
         handleDispose = handle.dispose
