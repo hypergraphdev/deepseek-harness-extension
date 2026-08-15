@@ -7,11 +7,13 @@ const NATIVE_HOST_NAME = 'ai.deepseek.dsh'
 
 const statusPane = document.getElementById('status')
 const appFrame = document.getElementById('app')
+const captureButton = document.getElementById('capture')
 
 function showStatus(html) {
   statusPane.innerHTML = html
   statusPane.classList.remove('hidden')
   appFrame.style.display = 'none'
+  captureButton.style.display = 'none'
 }
 
 // Origin the app was handed to; page reports target exactly this origin.
@@ -21,6 +23,7 @@ function showApp(url) {
   appOrigin = new URL(url).origin
   appFrame.src = url
   appFrame.style.display = 'block'
+  captureButton.style.display = 'block'
   statusPane.classList.add('hidden')
 }
 
@@ -58,6 +61,74 @@ function postToApp(message) {
   if (appOrigin === undefined || appFrame.contentWindow === null) return
   appFrame.contentWindow.postMessage(message, appOrigin)
 }
+
+// ---- Page capture ----
+// Runs INSIDE the inspected tab (serialized by chrome.scripting), so it may
+// only use what that page provides. Prefers the reader-style main region and
+// falls back to the body, mirroring what a reading-mode extractor keeps.
+function extractPageText() {
+  const pick = () => {
+    for (const selector of ['article', 'main', '[role="main"]', '#content', '.article', '.markdown-body']) {
+      const node = document.querySelector(selector)
+      // A wrapper that holds almost nothing is worse than the body.
+      if (node !== null && node.innerText.trim().length > 200) return node
+    }
+    return document.body
+  }
+  const selection = String(window.getSelection() ?? '').trim()
+  const root = pick()
+  const text = (root === null ? '' : root.innerText).replace(/\n{3,}/g, '\n\n').trim()
+  return { title: document.title, url: location.href, selection, text }
+}
+
+/** Cap on the extracted body: a whole prompt turn, not a whole book. */
+const CAPTURE_MAX_CHARS = 20000
+
+async function capturePage() {
+  captureButton.disabled = true
+  const restore = (label) => {
+    captureButton.textContent = label
+    setTimeout(() => { captureButton.textContent = '📄 读取本页'; captureButton.disabled = false }, 2200)
+  }
+  let tab
+  try {
+    const panelWindow = await chrome.windows.getCurrent()
+    ;[tab] = await chrome.tabs.query({ active: true, windowId: panelWindow.id })
+  } catch {
+    restore('读取失败')
+    return
+  }
+  if (tab === undefined || typeof tab.url !== 'string' || !/^https?:\/\//.test(tab.url)) {
+    restore('此页不支持')
+    return
+  }
+  let results
+  try {
+    results = await chrome.scripting.executeScript({ target: { tabId: tab.id }, func: extractPageText })
+  } catch {
+    // Chrome refuses injection on its own pages, the store, and PDF viewers.
+    restore('此页不可读')
+    return
+  }
+  const page = results?.[0]?.result
+  if (page === undefined || (page.text.length === 0 && page.selection.length === 0)) {
+    restore('无正文')
+    return
+  }
+  const body = page.text.length > CAPTURE_MAX_CHARS
+    ? `${page.text.slice(0, CAPTURE_MAX_CHARS)}\n\n[内容过长，已截断]`
+    : page.text
+  postToApp({
+    type: 'dsh:page-capture',
+    url: page.url,
+    title: page.title,
+    selection: page.selection,
+    text: body,
+  })
+  restore('✓ 已发送')
+}
+
+captureButton.addEventListener('click', () => { void capturePage() })
 
 // ---- Dictation host ----
 // Speech recognition runs HERE, in the panel's top-level extension page:

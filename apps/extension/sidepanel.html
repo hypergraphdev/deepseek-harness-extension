@@ -15,11 +15,20 @@
     button { margin-top: 10px; padding: 6px 14px; border: 1px solid #444; border-radius: 6px; background: #1b1b1b; color: #ddd; cursor: pointer; }
     button:hover { background: #262626; }
     .detail { color: #888; font-size: 12px; margin-top: 12px; word-break: break-all; }
+    /* Page-capture affordance: a floating pill over the app frame, so the
+       embedded GUI keeps its full height. Hidden until the app is served. */
+    #capture { position: fixed; right: 12px; bottom: 12px; z-index: 2; display: none;
+      margin: 0; padding: 5px 11px; font-size: 12px; border-radius: 999px;
+      background: rgba(28, 28, 30, 0.92); border: 1px solid #3a3a3c; color: #ddd;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35); backdrop-filter: blur(6px); }
+    #capture:hover { background: rgba(46, 46, 48, 0.95); }
+    #capture:disabled { opacity: 0.6; cursor: default; }
   </style>
 </head>
 <body>
   <div id="status">Connecting to dsh…</div>
   <iframe id="app" title="DeepSeek Harness" allow="microphone"></iframe>
+  <button id="capture" type="button" title="把当前标签页的正文发给智能体">📄 读取本页</button>
   <script src="sidepanel.js"></script>
 </body>
 </html>

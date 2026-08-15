@@ -25,12 +25,33 @@ export interface BrowserPageSample {
 
 let current: BrowserPageSample | null | undefined
 
+/** Wire shape of one extension page-capture report. */
+const CAPTURE_TYPE = 'dsh:page-capture'
+
+/** Cap on one capture's body, matching the panel's own extraction cap. */
+const CAPTURE_MAX_CHARS = 20_000
+
+/** One captured page body, staged for the next prompt. */
+let pendingCapture: string | undefined
+
 /**
  * The newest accepted page state for one outbound prompt.
  * @returns the sample, `null` for an explicit "no active page", or undefined outside the extension panel.
  */
 export function currentBrowserPage(): BrowserPageSample | null | undefined {
   return current
+}
+
+/**
+ * Take the staged page capture, if the user requested one since the last
+ * prompt. Captures are one-shot: reading clears the stage, so a body rides
+ * exactly the prompt the user sent it with.
+ * @returns the captured text block, or undefined when nothing is staged.
+ */
+export function takePageCapture(): string | undefined {
+  const capture = pendingCapture
+  pendingCapture = undefined
+  return capture
 }
 
 /**
@@ -44,7 +65,19 @@ function acceptReport(event: MessageEvent): void {
   if (!event.origin.startsWith('chrome-extension://')) return
   const data: unknown = event.data
   if (typeof data !== 'object' || data === null) return
-  const report = data as { type?: unknown; url?: unknown; title?: unknown }
+  const report = data as { type?: unknown; url?: unknown; title?: unknown; text?: unknown; selection?: unknown }
+  if (report.type === CAPTURE_TYPE) {
+    if (typeof report.url !== 'string' || typeof report.text !== 'string') return
+    const selection = typeof report.selection === 'string' ? report.selection.trim() : ''
+    const title = typeof report.title === 'string' ? report.title : ''
+    const body = report.text.slice(0, CAPTURE_MAX_CHARS)
+    // Named parts, so the model can tell the page apart from the user's own
+    // words and knows which fragment the user had highlighted.
+    pendingCapture = `<browser_page url="${report.url}" title="${title}">\n`
+      + (selection.length === 0 ? '' : `<selection>\n${selection}\n</selection>\n`)
+      + `<content>\n${body}\n</content>\n</browser_page>`
+    return
+  }
   if (report.type !== MESSAGE_TYPE) return
   if (typeof report.url !== 'string' || typeof report.title !== 'string') return
   if (!/^(?:https?|file):\/\//.test(report.url) || report.url.length > BROWSER_PAGE_URL_MAX_CHARS) {
