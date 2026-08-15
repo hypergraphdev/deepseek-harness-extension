@@ -279,6 +279,33 @@ export class HxaRuntime extends Service {
     const rows = Array.isArray(payload) ? payload : arr(obj(payload, 'messages')['messages'], 'messages')
     return rows.map(readMessage)
   }
+
+  /**
+   * Exchange the bot token for a one-time WebSocket connection ticket. The
+   * ticket is single-use and short-lived; fetch one immediately before each
+   * connect.
+   * @param signal - caller cancellation.
+   * @returns the connection ticket.
+   */
+  async wsTicket(signal?: AbortSignal): Promise<string> {
+    const payload = obj(await this.request('POST', '/api/ws-ticket', {}, signal), 'ws ticket')
+    return str(payload, 'ticket')
+  }
+
+  /**
+   * Build the WebSocket URL for a ticket, deriving the ws(s) scheme and `/ws`
+   * path from the configured hub URL.
+   * @param ticket - a ticket from {@link wsTicket}.
+   * @returns the full `wss://…/ws?ticket=…` URL.
+   * @throws HxaError when the service is dormant.
+   */
+  wsUrl(ticket: string): string {
+    const endpoint = this.endpoint()
+    if (endpoint === undefined) {
+      throw new HxaError('HXA_NOT_CONFIGURED', 'HXA is not configured: cannot build a WebSocket URL')
+    }
+    return `${endpoint.url.replace(/^http/, 'ws')}/ws?ticket=${encodeURIComponent(ticket)}`
+  }
 }
 
 export default HxaRuntime

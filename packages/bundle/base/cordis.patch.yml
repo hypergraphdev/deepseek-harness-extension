@@ -444,6 +444,11 @@
     - id: tool-hxa
       name: '@deepseek-ai/dsh-tool-hxa'
 
+    # Inbound bridge: while the hub is configured, one WebSocket keeps the bot
+    # online and wakes a coordinator agent per inbound DM. Dormant otherwise.
+    - id: hxa-inbound
+      name: '@deepseek-ai/dsh-hxa-inbound'
+
     - id: web
       name: '@deepseek-ai/dsh-web'
       config:

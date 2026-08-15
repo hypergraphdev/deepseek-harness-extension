@@ -227,6 +227,7 @@
     { "path": "./packages/compaction/command-compact" },
     { "path": "./packages/compaction/compaction-tool-result-pruner" },
     { "path": "./packages/hxa/hxa" },
+    { "path": "./packages/hxa/hxa-inbound" },
     { "path": "./packages/hxa/tool-hxa" },
     { "path": "./packages/web/web" },
     { "path": "./packages/web/web-search-exa" },
