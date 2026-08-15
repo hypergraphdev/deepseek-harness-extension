@@ -267,6 +267,9 @@
     - id: ui-plan
       name: '@deepseek-ai/dsh-client-ui-plan'
 
+    - id: ui-agents
+      name: '@deepseek-ai/dsh-client-ui-agents'
+
     - id: ui-user-questions
       name: '@deepseek-ai/dsh-client-ui-user-questions'
 

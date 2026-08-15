@@ -42,6 +42,9 @@
       "path": "../../host/apiproxy"
     },
     {
+      "path": "../../hxa/hxa"
+    },
+    {
       "path": "../../shell/shell-env"
     },
     {

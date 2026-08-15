@@ -178,6 +178,10 @@ export function SidebarRoot({
         })}
       </div>
 
+      {/* The team roster seat sits between the browsing region and the foot;
+          its registrant renders nothing while the roster source is dormant. */}
+      {renderSlot('sidebar.agents', { wide })}
+
       {/* Footer actions stack above Settings in both sidebar widths. */}
       <div className={css.footArea}>
         <div className={css.footerActions}>

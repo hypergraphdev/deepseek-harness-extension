@@ -22,6 +22,7 @@ import type {} from '@deepseek-ai/dsh-host-webserver'
 import type {} from '@deepseek-ai/dsh-system-prompt'
 import type {} from '@deepseek-ai/dsh-shell-env'
 import { installBrowserPageContext } from './browser-page.ts'
+import { installHxaRoster } from './hxa-roster.ts'
 
 /** Stable Cordis plugin name. */
 export const name = 'web-app'
@@ -151,6 +152,7 @@ export function apply(ctx: Context, config: Config): void {
     ctx.inject(['agents'], (agentCtx) => {
       installBrowserPageContext(agentCtx)
     })
+    installHxaRoster(ctx)
     ctx.inject(['shellEnv'], (runtimeCtx) => {
       runtimeCtx.shellEnv.register({
         name: 'web-runtime',
