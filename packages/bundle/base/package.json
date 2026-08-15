@@ -113,6 +113,8 @@
     "@deepseek-ai/dsh-user-approval": "workspace:^",
     "@deepseek-ai/dsh-user-questions": "workspace:^",
     "@deepseek-ai/dsh-vision-bridge": "workspace:^",
+    "@deepseek-ai/dsh-hxa": "workspace:^",
+    "@deepseek-ai/dsh-tool-hxa": "workspace:^",
     "@deepseek-ai/dsh-web": "workspace:^",
     "@deepseek-ai/dsh-web-search-deepseek": "workspace:^",
     "@deepseek-ai/dsh-workflow-worker-thread": "workspace:^",

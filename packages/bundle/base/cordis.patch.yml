@@ -408,6 +408,14 @@
     # protection and the model would choose the request target. Search is a full
     # auxiliary model request with server-side retrieval, so this shipped DeepSeek
     # route gets 60s while the provider-neutral tool default remains 30s.
+    # HXA Connect membership: dormant until a hub url is configured here (or
+    # via a user patch) and the bot token environment variable is set.
+    - id: hxa
+      name: '@deepseek-ai/dsh-hxa'
+
+    - id: tool-hxa
+      name: '@deepseek-ai/dsh-tool-hxa'
+
     - id: web
       name: '@deepseek-ai/dsh-web'
       config:
