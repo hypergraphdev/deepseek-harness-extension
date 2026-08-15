@@ -4319,6 +4319,9 @@ importers:
       '@deepseek-ai/dsh-user-approval':
         specifier: workspace:^
         version: link:../../interaction/user-approval
+      '@deepseek-ai/dsh-vision-bridge':
+        specifier: workspace:^
+        version: link:../../llm/vision-bridge
 
   packages/fs/tool-fs-search:
     dependencies:

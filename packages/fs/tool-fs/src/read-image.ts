@@ -20,6 +20,8 @@ import type { ContentBlock } from '@deepseek-ai/dsh-llm'
 import { defineTool } from '@deepseek-ai/dsh-tools'
 import type { GenericCallView, ToolExecution } from '@deepseek-ai/dsh-tools'
 import type {} from '@deepseek-ai/dsh-fs'
+// Type-only: the ctx.visionBridge Context merge consulted by the route gate.
+import type {} from '@deepseek-ai/dsh-vision-bridge'
 import { resolveRegularReadTarget } from './read-target.ts'
 
 /** Extensions `read_image` accepts; magic-byte validation at the attachment service stays authoritative. */
@@ -56,8 +58,10 @@ export function imageMediaTypeForPath(filePath: string): ImageMediaType | undefi
 /**
  * Enforce the strict image-capability gate for the calling route. Resolves the
  * session's latest routed provider/model (request header config, then agent
- * options) and requires the exact resolved route to declare `image` input explicitly.
- * @param ctx - the plugin context used to resolve the optional `llm` service.
+ * options) and requires the exact resolved route to declare `image` input
+ * explicitly, or an armed vision bridge that transcribes image history for
+ * text-only routes.
+ * @param ctx - the plugin context used to resolve the optional `llm` and `visionBridge` services.
  * @param exec - the tool-execution context supplying the calling agent.
  * @param requestedPath - the raw, not-yet-resolved path rendered in refusal messages.
  */
@@ -70,9 +74,12 @@ export async function assertImageCapableRoute(ctx: Context, exec: ToolExecution,
     throw new Error(`cannot read "${requestedPath}" as an image: the current model route could not be resolved`)
   }
   const active = await llm.resolveModelInfo(provider, model, exec.signal)
-  if (active.inputModalities === undefined || !active.inputModalities.includes('image')) {
-    throw new Error(`cannot read "${requestedPath}" as an image: model "${model}" does not declare image input; switch to an image-capable model to read images`)
-  }
+  if (active.inputModalities !== undefined && active.inputModalities.includes('image')) return
+  // An armed bridge repairs UNSUPPORTED_CONTENT requests by transcribing every
+  // image in history, so the emitted image block cannot break this route's
+  // continuation.
+  if (ctx.get('visionBridge')?.route() !== undefined) return
+  throw new Error(`cannot read "${requestedPath}" as an image: model "${model}" does not declare image input; switch to an image-capable model or configure the vision bridge to read images`)
 }
 
 /**
@@ -130,7 +137,7 @@ function imageReadContent(value: ImageReadValue): ContentBlock[] {
 export function applyReadImageTool(ctx: Context): void {
   ctx.tools.register(defineTool({
     name: 'read_image',
-    description: 'Read a PNG/JPEG/WebP/GIF file and return the image itself. Requires the current model to accept image input.',
+    description: 'Read a PNG/JPEG/WebP/GIF file and return the image itself. Requires the current model to accept image input, or a configured vision bridge that transcribes images for it.',
     parameters: {
       file_path: { type: 'string', required: true, description: 'Path to the image file, resolved by the filesystem backend.' },
     },

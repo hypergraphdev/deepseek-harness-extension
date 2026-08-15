@@ -19,6 +19,9 @@
       "path": "../../llm/llm"
     },
     {
+      "path": "../../llm/vision-bridge"
+    },
+    {
       "path": "../../core/tools"
     },
     {
