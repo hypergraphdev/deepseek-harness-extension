@@ -23,6 +23,7 @@ import type {} from '@deepseek-ai/dsh-system-prompt'
 import type {} from '@deepseek-ai/dsh-shell-env'
 import { installBrowserPageContext } from './browser-page.ts'
 import { installHxaRoster } from './hxa-roster.ts'
+import { installWeixinLink } from './weixin-link.ts'
 
 /** Stable Cordis plugin name. */
 export const name = 'web-app'
@@ -153,6 +154,7 @@ export function apply(ctx: Context, config: Config): void {
       installBrowserPageContext(agentCtx)
     })
     installHxaRoster(ctx)
+    installWeixinLink(ctx)
     ctx.inject(['shellEnv'], (runtimeCtx) => {
       runtimeCtx.shellEnv.register({
         name: 'web-runtime',

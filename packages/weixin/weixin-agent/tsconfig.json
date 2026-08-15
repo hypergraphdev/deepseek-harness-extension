@@ -15,40 +15,19 @@
       "path": "../../../vendor/schemastery"
     },
     {
-      "path": "../../../vendor/loader"
-    },
-    {
-      "path": "../../boot/app-boot"
-    },
-    {
-      "path": "../../boot/cmdline"
-    },
-    {
-      "path": "../../host/frontend-static"
-    },
-    {
-      "path": "../../host/webserver"
-    },
-    {
-      "path": "../../core/system-prompt"
+      "path": "../weixin"
     },
     {
       "path": "../../core/agent"
     },
     {
+      "path": "../../core/session"
+    },
+    {
+      "path": "../../core/system-prompt"
+    },
+    {
       "path": "../../llm/llm"
-    },
-    {
-      "path": "../../host/apiproxy"
-    },
-    {
-      "path": "../../hxa/hxa"
-    },
-    {
-      "path": "../../weixin/weixin"
-    },
-    {
-      "path": "../../shell/shell-env"
     },
     {
       "path": "../../runtime-diagnostics/invariants"

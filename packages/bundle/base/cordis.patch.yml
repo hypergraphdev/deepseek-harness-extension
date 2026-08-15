@@ -449,6 +449,14 @@
     - id: hxa-inbound
       name: '@deepseek-ai/dsh-hxa-inbound'
 
+    # WeChat: dormant until a QR scan stores a credential under the harness
+    # home; the agent bridge answers inbound messages once one exists.
+    - id: weixin
+      name: '@deepseek-ai/dsh-weixin'
+
+    - id: weixin-agent
+      name: '@deepseek-ai/dsh-weixin-agent'
+
     - id: web
       name: '@deepseek-ai/dsh-web'
       config:

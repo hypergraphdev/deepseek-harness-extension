@@ -117,6 +117,8 @@
     "@deepseek-ai/dsh-vision-bridge": "workspace:^",
     "@deepseek-ai/dsh-hxa": "workspace:^",
     "@deepseek-ai/dsh-hxa-inbound": "workspace:^",
+    "@deepseek-ai/dsh-weixin": "workspace:^",
+    "@deepseek-ai/dsh-weixin-agent": "workspace:^",
     "@deepseek-ai/dsh-tool-hxa": "workspace:^",
     "@deepseek-ai/dsh-web": "workspace:^",
     "@deepseek-ai/dsh-web-search-deepseek": "workspace:^",
