@@ -18,7 +18,7 @@ import z from '@deepseek-ai/schemastery'
 import type { ImageAttachmentRef } from '@deepseek-ai/dsh-attachment'
 import { BlockAssembler, contentHasImage, createUserMessage, finishReasonError } from '@deepseek-ai/dsh-llm'
 import type { ContentBlock, GenerateOptions, ImageBlock } from '@deepseek-ai/dsh-llm'
-import type { Session, UserMessage } from '@deepseek-ai/dsh-session'
+import type { Session } from '@deepseek-ai/dsh-session'
 import { installSettingsSection, settingsNamespace } from '@deepseek-ai/dsh-settings'
 import type {} from '@deepseek-ai/dsh-agent'
 import { registerAnalyzeImageTool } from './tool.ts'
@@ -255,10 +255,10 @@ export class VisionBridge extends Service {
   }
 
   /**
-   * Shadow every image-bearing `user/message` surface node with a text-only
-   * replacement built from per-image transcriptions. Images nested anywhere
-   * else (tool results) are left untouched — replacing a `tool/result` node
-   * with a user message would break its tool-call pairing.
+   * Shadow every image-bearing `user/message` and `tool/result` surface node
+   * with a same-type text-only replacement built from per-image
+   * transcriptions. A tool result is replaced by a tool result carrying the
+   * same call identity, so tool-call pairing is preserved.
    * @param session - the session whose surface is repaired.
    * @param route - the resolved vision route serving the transcriptions.
    * @param signal - the turn abort signal.
@@ -274,34 +274,70 @@ export class VisionBridge extends Service {
     for (const seq of [...session.surface.nodes]) {
       signal.throwIfAborted()
       const event = session.events.find(candidate => candidate.seq === seq)
-      if (event?.type !== 'user/message') continue
-      const message: UserMessage = event.data
-      if (!contentHasImage(message.content)) continue
-      const captionSeqs: number[] = []
-      const content: ContentBlock[] = []
-      for (const block of message.content) {
-        if (block.type !== 'image') {
-          content.push(block)
-          continue
-        }
-        const text = await this.describe(block, undefined, { sessionId: session.id, signal })
-        const caption = session.append('vision-bridge/caption', {
-          attachment: block.attachment,
-          provider: route.provider,
-          model: route.model,
-          text,
+      if (event?.type === 'user/message') {
+        const message = event.data
+        if (!contentHasImage(message.content)) continue
+        const { content, captionSeqs } = await this.transcribeBlockList(message.content, session, route, signal)
+        if (contentHasImage(content)) continue
+        session.append('user/message', { ...message, content }, {
+          surfaceOp: { op: 'replace', start: seq, end: seq },
+          sourceEventSeqs: [...captionSeqs, seq],
         })
-        captionSeqs.push(caption.seq)
-        content.push({ type: 'text', text: transcriptionText(block.attachment, route.model, text) })
+        replaced = true
+      } else if (event?.type === 'tool/result') {
+        // The images sit inside the tool-result block, the only part a
+        // tool/result replacement may change.
+        const message = event.data.message
+        const [result] = message.content
+        if (result?.type !== 'tool-result' || !contentHasImage(result.content)) continue
+        const { content, captionSeqs } = await this.transcribeBlockList(result.content, session, route, signal)
+        if (contentHasImage(content)) continue
+        session.append('tool/result', {
+          ...event.data,
+          message: { ...message, content: [{ ...result, content }] },
+        }, {
+          surfaceOp: { op: 'replace', start: seq, end: seq },
+          sourceEventSeqs: [...captionSeqs, seq],
+        })
+        replaced = true
       }
-      if (contentHasImage(content)) continue
-      session.append('user/message', { ...message, content }, {
-        surfaceOp: { op: 'replace', start: seq, end: seq },
-        sourceEventSeqs: [...captionSeqs, seq],
-      })
-      replaced = true
     }
     return replaced
+  }
+
+  /**
+   * Transcribe every image block in one flat block list, appending a durable
+   * caption event per image.
+   * @param blocks - the block list to repair.
+   * @param session - the session receiving caption events.
+   * @param route - the resolved vision route serving the transcriptions.
+   * @param signal - the turn abort signal.
+   * @returns the repaired list plus the appended caption seqs.
+   */
+  private async transcribeBlockList(
+    blocks: readonly ContentBlock[],
+    session: Session,
+    route: VisionBridgeRoute,
+    signal: AbortSignal,
+  ): Promise<{ content: ContentBlock[]; captionSeqs: number[] }> {
+    const captionSeqs: number[] = []
+    const content: ContentBlock[] = []
+    for (const block of blocks) {
+      if (block.type !== 'image') {
+        content.push(block)
+        continue
+      }
+      const text = await this.describe(block, undefined, { sessionId: session.id, signal })
+      const caption = session.append('vision-bridge/caption', {
+        attachment: block.attachment,
+        provider: route.provider,
+        model: route.model,
+        text,
+      })
+      captionSeqs.push(caption.seq)
+      content.push({ type: 'text', text: transcriptionText(block.attachment, route.model, text) })
+    }
+    return { content, captionSeqs }
   }
 }
 

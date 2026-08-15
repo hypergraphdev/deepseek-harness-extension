@@ -9,6 +9,7 @@ import { contentHasImage, createUserMessage, LlmError } from '@deepseek-ai/dsh-l
 import type { GenerateOptions, ImageBlock } from '@deepseek-ai/dsh-llm'
 import { SessionId } from '@deepseek-ai/dsh-session'
 import type { SessionEvent } from '@deepseek-ai/dsh-session'
+import { defineTool } from '@deepseek-ai/dsh-tools'
 import VisionBridge, { transcriptionText } from '@deepseek-ai/dsh-vision-bridge'
 import type { Config } from '@deepseek-ai/dsh-vision-bridge/src/index.ts'
 import { MockAdapter, textResponse, toolCallResponse } from '../../../core/agent-loop/tests/mock-adapter.ts'
@@ -110,6 +111,58 @@ describe('request repair', () => {
 
     const answer = events.find((event): event is SessionEvent<'assistant/message'> => event.type === 'assistant/message')
     expect(answer?.data.message.content).toEqual([{ type: 'text', text: 'It shows a downtrend.' }])
+  })
+
+  it('transcribes tool-result images with a same-call replacement, preserving the pairing', async () => {
+    const ctx = await harness({ provider: 'vision', model: 'v1' })
+    ctx.llm.registerAdapter(['vision'], new MockAdapter([textResponse('a push-flow factory layout diagram')]))
+    ctx.tools.register(defineTool({
+      name: 'grab_image',
+      description: 'test tool returning an image block',
+      parameters: {},
+      output: {
+        schema: { type: 'object', additionalProperties: false, properties: {} },
+        render: () => [
+          { type: 'text', text: 'grabbed' },
+          { type: 'image', attachment: imageRef('page13.png') },
+        ],
+      },
+      execute: async () => ({}),
+    }))
+    const chat = new MockAdapter([
+      toolCallResponse('call-1', 'grab_image', {}),
+      refuseImages(() => textResponse('unreachable')),
+      textResponse('The diagram shows push flow.'),
+    ])
+    ctx.llm.registerAdapter(['chat'], chat)
+    const agent = ctx.agentLoop.create(SessionId('s1'), { provider: 'chat', model: 'text-only' })
+    agent.followup(createUserMessage({ content: [{ type: 'text', text: 'what is wrong on page 13?' }], source: { kind: 'user' } }))
+    await waitForIdle(ctx, agent)
+
+    const events = agent.session.events
+    const caption = events.find((event): event is SessionEvent<'vision-bridge/caption'> => event.type === 'vision-bridge/caption')
+    expect(caption?.data.text).toBe('a push-flow factory layout diagram')
+
+    // The original image-bearing tool result stays logged; its replacement is
+    // another tool/result carrying the same call identity, so pairing holds.
+    const toolResults = events.filter((event): event is SessionEvent<'tool/result'> => event.type === 'tool/result')
+    expect(toolResults.some(event => contentHasImage(event.data.message.content))).toBe(true)
+    const replacement = toolResults.find(event => event.surfaceOp !== undefined && event.surfaceOp !== 'append')
+    expect(replacement).toBeDefined()
+    expect(replacement?.data.message.source).toEqual(toolResults[0]?.data.message.source)
+
+    const derived = agent.session.deriveMessages()
+    expect(derived.some(message => contentHasImage(message.content))).toBe(false)
+    // The transcription sits inside the replaced tool-result block's content.
+    const transcribed = derived.flatMap(message => message.content)
+      .flatMap(block => block.type === 'tool-result' ? block.content : [block])
+      .filter((block): block is { type: 'text'; text: string } => block.type === 'text')
+      .map(block => block.text)
+      .join('\n')
+    expect(transcribed).toContain('a push-flow factory layout diagram')
+
+    const answers = events.filter((event): event is SessionEvent<'assistant/message'> => event.type === 'assistant/message')
+    expect(answers.at(-1)?.data.message.content).toEqual([{ type: 'text', text: 'The diagram shows push flow.' }])
   })
 
   it('stays dormant without a configured route: the failure remains terminal', async () => {
