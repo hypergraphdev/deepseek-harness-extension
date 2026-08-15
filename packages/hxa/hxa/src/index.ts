@@ -29,7 +29,7 @@ declare module '@deepseek-ai/cordis' {
 
 /** Hub endpoint and bot credential resolution. */
 export interface Config {
-  /** HXA Connect base URL (for example `https://www.ucai.net/connect`). Omitted = dormant. */
+  /** HXA Connect base URL (for example `https://hxa.example.com/connect`). Omitted = dormant. */
   url?: string
   /** Environment variable holding the bot token. The variable being unset keeps the service dormant. */
   tokenEnv?: string

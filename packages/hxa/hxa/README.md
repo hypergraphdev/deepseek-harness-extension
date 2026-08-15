@@ -6,7 +6,7 @@ Service Definition and Provider for the HXA Connect capability (`ctx.hxa`): one 
 
 | Field | Meaning |
 |---|---|
-| `url` | Hub base URL, for example `https://www.ucai.net/connect`. Omitted = dormant. |
+| `url` | Hub base URL, for example `https://hxa.example.com/connect`. Omitted = dormant. |
 | `tokenEnv` | Environment variable holding the bot token (default `HXA_BOT_TOKEN`). Unset variable = dormant. |
 | `requestTimeoutMs` | Per-request timeout (default 15000). |
 
