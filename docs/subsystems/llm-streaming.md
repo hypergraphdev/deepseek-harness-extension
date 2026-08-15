@@ -862,7 +862,7 @@ async describe( image: ImageBlock, instruction: string | undefined, context: { s
 
 Types: [Session](session.md)
 
-Source: [`packages/llm/vision-bridge/src/index.ts:153`](../../packages/llm/vision-bridge/src/index.ts)
+Source: [`packages/llm/vision-bridge/src/index.ts:133`](../../packages/llm/vision-bridge/src/index.ts)
 
 <a id="llm-events"></a>
 

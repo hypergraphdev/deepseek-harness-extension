@@ -1,0 +1,16 @@
+{
+  "manifest_version": 3,
+  "name": "DeepSeek Harness",
+  "description": "Open your local DeepSeek Harness agent in the browser side panel; launches the dsh web server on demand.",
+  "version": "0.1.0",
+  "permissions": ["sidePanel", "nativeMessaging"],
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
+  "action": {
+    "default_title": "Open DeepSeek Harness"
+  },
+  "background": {
+    "service_worker": "background.js"
+  }
+}

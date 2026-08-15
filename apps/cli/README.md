@@ -12,6 +12,8 @@ The `dsh` command is the product launcher for profiles: ordered stacks of plugin
 | `dsh --profile headless "job"` | Run one fresh persisted session, print the final answer, and exit. |
 | `dsh web` | Alias of `--profile web`. |
 | `dsh plugin --profile <name> <pnpm args>` | Manage a profile's plugins by forwarding to pnpm in the profile directory. |
+| `dsh install-browser-host --extension <id>` | Register the native-messaging shim and manifest so the [browser extension](../extension/README.md) can launch `dsh web` (macOS Chrome/Edge). |
+| `dsh browser-host` | The native-messaging endpoint those manifests point at; the browser launches it, not the user. |
 
 The invoking directory is the default workspace root. The `web` and `headless` profiles auto-initialize on first use from shipped templates; any other profile must be created through `dsh plugin`.
 

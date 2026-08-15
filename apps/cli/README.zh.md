@@ -12,6 +12,8 @@
 | `dsh --profile headless "job"` | 运行一个全新的持久化会话，打印最终答案并退出。 |
 | `dsh web` | `--profile web` 的别名。 |
 | `dsh plugin --profile <name> <pnpm args>` | 通过在 profile 目录中转发给 pnpm 来管理该 profile 的插件。 |
+| `dsh install-browser-host --extension <id>` | 注册 native-messaging shim 与清单，让[浏览器扩展](../extension/README.md)能够启动 `dsh web`（macOS 的 Chrome/Edge）。 |
+| `dsh browser-host` | 上述清单指向的 native-messaging 端点；由浏览器启动，而非用户直接使用。 |
 
 运行命令时所在的目录将作为默认 workspace 根目录。`web` 和 `headless` profile 在首次使用时会从随附模板自动初始化；其他任何 profile 都必须通过 `dsh plugin` 创建。
 

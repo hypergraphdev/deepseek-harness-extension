@@ -44,8 +44,28 @@ interface PluginInvocation {
   args: string[]
 }
 
+/** Serve the browser extension's native-messaging endpoint over stdio. */
+interface BrowserHostInvocation {
+  mode: 'browser-host'
+  /** Port the dsh web server is expected on; the host launches one there when absent. */
+  port: number
+}
+
+/** Write the native-messaging host manifest and shim so a browser can launch dsh. */
+interface InstallBrowserHostInvocation {
+  mode: 'install-browser-host'
+  /** The browser extension id allowed to connect to the native host. */
+  extension: string
+  /** Target browsers whose manifest directories receive the registration. */
+  browsers: string[]
+  /** Port recorded in the shim for the launched dsh web server. */
+  port: number
+}
+
 /** The resolved `dsh` invocation. Help, version, and errors exit inside {@link parseDshArgs}. */
-export type DshInvocation = ProfileInvocation | DumpConfigInvocation | PluginInvocation
+export type DshInvocation
+  = ProfileInvocation | DumpConfigInvocation | PluginInvocation
+    | BrowserHostInvocation | InstallBrowserHostInvocation
 
 /** Launcher flags shared by the default command and the `web` alias. */
 interface BootOptions {
@@ -69,6 +89,7 @@ Examples:
   dsh --profile tui --resume <session>       arguments after the launcher flags reach the app
   dsh --profile web --help                   the web app's own flags and help
   dsh plugin --profile tui add <package>     install a plugin into the tui profile
+  dsh install-browser-host --extension <id>  let the browser extension launch dsh web
 `
 
 /**
@@ -178,6 +199,39 @@ export function parseDshArgs(argv: readonly string[], version: string): DshInvoc
       if (options.profile === '') program.error('error: --profile needs a name')
       if (args.length === 0) program.error('error: plugin needs pnpm arguments to forward (e.g. add <package>)')
       resolved = { mode: 'plugin', profile: options.profile, args }
+    })
+
+  const browserHost = program.command('browser-host').description('serve the browser extension\'s native-messaging endpoint over stdio (the browser launches this; not for interactive use)')
+  browserHost
+    // The browser appends its own arguments (the caller origin, and
+    // --parent-window on Windows); the host ignores them.
+    .allowUnknownOption()
+    .argument('[args...]', 'browser-supplied arguments, ignored')
+    .option('--port <port>', 'port the dsh web server serves on', '3080')
+    .action((_args: string[], options: { port: string }) => {
+      rejectParentOptions('browser-host')
+      const port = Number(options.port)
+      if (!Number.isInteger(port) || port < 1 || port > 65535) {
+        program.error('error: --port needs an integer between 1 and 65535')
+      }
+      resolved = { mode: 'browser-host', port }
+    })
+
+  const installBrowserHost = program.command('install-browser-host').description('register the native-messaging host manifest and shim so the browser extension can launch dsh web')
+  installBrowserHost
+    .requiredOption('--extension <id>', 'the browser extension id allowed to connect')
+    .option('--browser <name>', 'target browser: chrome | edge (repeatable)', collect)
+    .option('--port <port>', 'port the launched dsh web server serves on', '3080')
+    .action((options: { extension: string; browser?: string[]; port: string }) => {
+      rejectParentOptions('install-browser-host')
+      if (options.extension === '') program.error('error: --extension needs an id')
+      const browsers = options.browser ?? ['chrome']
+      if (browsers.includes('')) program.error('error: --browser needs a name')
+      const port = Number(options.port)
+      if (!Number.isInteger(port) || port < 1 || port > 65535) {
+        program.error('error: --port needs an integer between 1 and 65535')
+      }
+      resolved = { mode: 'install-browser-host', extension: options.extension, browsers, port }
     })
 
   try {
