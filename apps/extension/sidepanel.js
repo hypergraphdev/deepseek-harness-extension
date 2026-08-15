@@ -66,9 +66,33 @@ function postToApp(message) {
 // over the same validated channel the page reports use.
 const Recognition = self.SpeechRecognition ?? self.webkitSpeechRecognition
 let dictationSession = null
+let grantTabOpened = false
 
-function startDictation() {
+// The side panel cannot show the microphone permission prompt; a top-level
+// extension page can, and the grant covers the whole extension origin. Probe
+// with getUserMedia first: granted permission releases the probe stream and
+// proceeds, anything else opens the grant page once per panel lifetime.
+async function ensureMicPermission() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+    for (const track of stream.getTracks()) track.stop()
+    grantTabOpened = false
+    return true
+  } catch {
+    if (!grantTabOpened) {
+      grantTabOpened = true
+      chrome.tabs.create({ url: chrome.runtime.getURL('mic-permission.html') })
+    }
+    postToApp({ type: 'dsh:dictation-failure', failure: 'denied' })
+    postToApp({ type: 'dsh:dictation-state', listening: false })
+    return false
+  }
+}
+
+async function startDictation() {
   if (Recognition === undefined || dictationSession !== null) return
+  if (!(await ensureMicPermission())) return
+  if (dictationSession !== null) return
   const session = new Recognition()
   session.lang = navigator.language
   session.continuous = true
