@@ -46,3 +46,6 @@ packages/*/*/src/**/*.js
 packages/*/*/src/**/*.js.map
 packages/*/*/src/**/*.d.ts.map
 nohup.out
+
+# User-owned extension site adapters (see site-adapters.example.json)
+apps/extension/site-adapters.json

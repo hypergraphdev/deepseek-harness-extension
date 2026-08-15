@@ -1,0 +1,32 @@
+[
+  {
+    "name": "binance-klines",
+    "match": "(^|\\.)binance\\.com$",
+    "capture": {
+      "symbol": { "from": "url", "pattern": "/trade/([A-Za-z0-9]+)_([A-Za-z0-9]+)", "group": 0 },
+      "base": { "from": "url", "pattern": "/trade/([A-Za-z0-9]+)_", "group": 1 },
+      "quote": { "from": "url", "pattern": "/trade/[A-Za-z0-9]+_([A-Za-z0-9]+)", "group": 1 }
+    },
+    "request": "https://api.binance.com/api/v3/klines?symbol={base}{quote}&interval=1h&limit=120",
+    "note": "Hourly candles for the pair in the URL: [openTime, open, high, low, close, volume, ...]."
+  },
+  {
+    "name": "ths-klines",
+    "match": "(^|\\.)10jqka\\.com\\.cn$",
+    "capture": {
+      "code": { "from": "url", "pattern": "/(\\d{6})", "group": 1 },
+      "market": { "from": "url", "pattern": "/(\\d)\\d{5}", "group": 1 }
+    },
+    "request": "https://d.10jqka.com.cn/v6/line/hs_{code}/01/last.js",
+    "extract": "\\((.*)\\)\\s*;?\\s*$",
+    "note": "Daily candles as a compact string: date,open,high,low,close,volume,amount per row. The hs_ prefix covers Shanghai and Shenzhen; other boards need their own adapter entry."
+  },
+  {
+    "name": "tradingview-symbol",
+    "match": "(^|\\.)tradingview\\.com$",
+    "capture": {
+      "symbol": { "from": "url", "pattern": "symbol=([^&]+)", "group": 1 }
+    },
+    "note": "TradingView streams its candles over an in-page WebSocket, so no HTTP request can fetch them. Without a `request` this adapter reports the charted symbol only; route it to a data source you can query (for example the binance adapter's endpoint) if you need the series."
+  }
+]

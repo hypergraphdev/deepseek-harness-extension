@@ -63,26 +63,27 @@ function postToApp(message) {
 }
 
 // ---- Page capture ----
-// Runs INSIDE the inspected tab (serialized by chrome.scripting), so it may
-// only use what that page provides. Prefers the reader-style main region and
-// falls back to the body, mirroring what a reading-mode extractor keeps.
-function extractPageText() {
-  const pick = () => {
-    for (const selector of ['article', 'main', '[role="main"]', '#content', '.article', '.markdown-body']) {
-      const node = document.querySelector(selector)
-      // A wrapper that holds almost nothing is worse than the body.
-      if (node !== null && node.innerText.trim().length > 200) return node
-    }
-    return document.body
-  }
-  const selection = String(window.getSelection() ?? '').trim()
-  const root = pick()
-  const text = (root === null ? '' : root.innerText).replace(/\n{3,}/g, '\n\n').trim()
-  return { title: document.title, url: location.href, selection, text }
-}
+// The extraction itself lives in page-extract.js, injected into the tab; the
+// panel only decides when to run it and where the result goes.
 
 /** Cap on the extracted body: a whole prompt turn, not a whole book. */
 const CAPTURE_MAX_CHARS = 20000
+
+/**
+ * The user's site adapters, from `site-adapters.json` beside this file.
+ * Absent (the shipped state) means no site knowledge at all — see
+ * site-adapters.example.json for the format.
+ */
+async function loadSiteAdapters() {
+  try {
+    const response = await fetch(chrome.runtime.getURL('site-adapters.json'))
+    if (!response.ok) return []
+    const parsed = await response.json()
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
+  }
+}
 
 async function capturePage() {
   captureButton.disabled = true
@@ -102,30 +103,40 @@ async function capturePage() {
     restore('此页不支持')
     return
   }
+  const adapters = await loadSiteAdapters()
   let results
   try {
-    results = await chrome.scripting.executeScript({ target: { tabId: tab.id }, func: extractPageText })
+    // The extractor file first, then one call that uses it: reading mode
+    // always, plus whichever configured adapter matches this host.
+    await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ['page-extract.js'] })
+    results = await chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      args: [adapters],
+      func: async (configured) => ({ page: readPage(), site: await readSiteData(configured) }),
+    })
   } catch {
     // Chrome refuses injection on its own pages, the store, and PDF viewers.
     restore('此页不可读')
     return
   }
-  const page = results?.[0]?.result
-  if (page === undefined || (page.text.length === 0 && page.selection.length === 0)) {
+  const captured = results?.[0]?.result
+  const page = captured?.page
+  if (page === undefined || (page.markdown.length === 0 && page.selection.length === 0)) {
     restore('无正文')
     return
   }
-  const body = page.text.length > CAPTURE_MAX_CHARS
-    ? `${page.text.slice(0, CAPTURE_MAX_CHARS)}\n\n[内容过长，已截断]`
-    : page.text
+  const body = page.markdown.length > CAPTURE_MAX_CHARS
+    ? `${page.markdown.slice(0, CAPTURE_MAX_CHARS)}\n\n[内容过长，已截断]`
+    : page.markdown
   postToApp({
     type: 'dsh:page-capture',
     url: page.url,
     title: page.title,
     selection: page.selection,
     text: body,
+    ...(captured.site === undefined ? {} : { site: captured.site }),
   })
-  restore('✓ 已发送')
+  restore(captured.site === undefined ? '✓ 已发送' : '✓ 已发送(含数据)')
 }
 
 captureButton.addEventListener('click', () => { void capturePage() })

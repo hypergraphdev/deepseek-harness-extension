@@ -31,6 +31,9 @@ const CAPTURE_TYPE = 'dsh:page-capture'
 /** Cap on one capture's body, matching the panel's own extraction cap. */
 const CAPTURE_MAX_CHARS = 20_000
 
+/** Cap on one site adapter's serialized payload. */
+const SITE_DATA_MAX_CHARS = 20_000
+
 /** One captured page body, staged for the next prompt. */
 let pendingCapture: string | undefined
 
@@ -65,16 +68,31 @@ function acceptReport(event: MessageEvent): void {
   if (!event.origin.startsWith('chrome-extension://')) return
   const data: unknown = event.data
   if (typeof data !== 'object' || data === null) return
-  const report = data as { type?: unknown; url?: unknown; title?: unknown; text?: unknown; selection?: unknown }
+  const report = data as {
+    type?: unknown
+    url?: unknown
+    title?: unknown
+    text?: unknown
+    selection?: unknown
+    site?: unknown
+  }
   if (report.type === CAPTURE_TYPE) {
     if (typeof report.url !== 'string' || typeof report.text !== 'string') return
     const selection = typeof report.selection === 'string' ? report.selection.trim() : ''
     const title = typeof report.title === 'string' ? report.title : ''
     const body = report.text.slice(0, CAPTURE_MAX_CHARS)
+    // A configured site adapter's payload rides beside the article: numbers
+    // a chart never puts in the DOM stay machine-readable as JSON.
+    let siteBlock = ''
+    if (typeof report.site === 'object' && report.site !== null) {
+      const json = JSON.stringify(report.site).slice(0, SITE_DATA_MAX_CHARS)
+      siteBlock = `<site_data>\n${json}\n</site_data>\n`
+    }
     // Named parts, so the model can tell the page apart from the user's own
     // words and knows which fragment the user had highlighted.
     pendingCapture = `<browser_page url="${report.url}" title="${title}">\n`
       + (selection.length === 0 ? '' : `<selection>\n${selection}\n</selection>\n`)
+      + siteBlock
       + `<content>\n${body}\n</content>\n</browser_page>`
     return
   }
