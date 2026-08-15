@@ -38,3 +38,11 @@ apps/web/dist/
 worktrees/
 .agents/worktrees/
 .typert-*/
+
+# Build output misplaced into src/ (a misconfigured tsc emit); sources are .ts,
+# and the tracked hand-written *.d.ts (css-modules.d.ts etc.) are unaffected
+# because tracked files are never hidden by gitignore.
+packages/*/*/src/**/*.js
+packages/*/*/src/**/*.js.map
+packages/*/*/src/**/*.d.ts.map
+nohup.out
