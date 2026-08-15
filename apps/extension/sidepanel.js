@@ -53,13 +53,69 @@ chrome.tabs.onUpdated.addListener((_tabId, changeInfo, tab) => {
     reportActivePage()
   }
 })
+// Post one message into the embedded app at its exact origin.
+function postToApp(message) {
+  if (appOrigin === undefined || appFrame.contentWindow === null) return
+  appFrame.contentWindow.postMessage(message, appOrigin)
+}
+
+// ---- Dictation host ----
+// Speech recognition runs HERE, in the panel's top-level extension page:
+// Chrome refuses the Web Speech API inside the app's cross-origin iframe, so
+// the app asks this page to listen and receives transcript segments back
+// over the same validated channel the page reports use.
+const Recognition = self.SpeechRecognition ?? self.webkitSpeechRecognition
+let dictationSession = null
+
+function startDictation() {
+  if (Recognition === undefined || dictationSession !== null) return
+  const session = new Recognition()
+  session.lang = navigator.language
+  session.continuous = true
+  session.interimResults = false
+  session.onresult = (event) => {
+    for (let index = event.resultIndex; index < event.results.length; index += 1) {
+      const result = event.results[index]
+      if (result === undefined || !result.isFinal) continue
+      const text = result[0].transcript.trim()
+      if (text.length > 0) postToApp({ type: 'dsh:dictation-text', text })
+    }
+  }
+  session.onerror = (event) => {
+    if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+      postToApp({ type: 'dsh:dictation-failure', failure: 'denied' })
+    } else if (event.error !== 'no-speech' && event.error !== 'aborted') {
+      postToApp({ type: 'dsh:dictation-failure', failure: 'error' })
+    }
+  }
+  session.onend = () => {
+    dictationSession = null
+    postToApp({ type: 'dsh:dictation-state', listening: false })
+  }
+  dictationSession = session
+  postToApp({ type: 'dsh:dictation-state', listening: true })
+  session.start()
+}
+
 // The app announces its listener after boot; the load-time report below can
-// fire before that listener exists, so the handshake re-reports.
+// fire before that listener exists, so the handshake re-reports. The same
+// channel carries the app's dictation requests.
 window.addEventListener('message', (event) => {
-  if (event.source === appFrame.contentWindow
-    && event.data !== null && typeof event.data === 'object'
-    && event.data.type === 'dsh:browser-page-ready') {
-    reportActivePage()
+  if (event.source !== appFrame.contentWindow
+    || event.data === null || typeof event.data !== 'object') return
+  switch (event.data.type) {
+    case 'dsh:browser-page-ready':
+      reportActivePage()
+      break
+    case 'dsh:dictation-probe':
+      postToApp({ type: 'dsh:dictation-capability', supported: Recognition !== undefined })
+      break
+    case 'dsh:dictation-start':
+      startDictation()
+      break
+    case 'dsh:dictation-stop':
+      dictationSession?.stop()
+      break
   }
 })
 appFrame.addEventListener('load', () => { reportActivePage() })
