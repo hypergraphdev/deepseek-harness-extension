@@ -3,7 +3,7 @@
   "name": "DeepSeek Harness",
   "description": "Open your local DeepSeek Harness agent in the browser side panel; launches the dsh web server on demand.",
   "version": "0.1.0",
-  "permissions": ["sidePanel", "nativeMessaging"],
+  "permissions": ["sidePanel", "nativeMessaging", "tabs"],
   "side_panel": {
     "default_path": "sidepanel.html"
   },

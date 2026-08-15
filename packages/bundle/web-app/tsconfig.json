@@ -33,6 +33,15 @@
       "path": "../../core/system-prompt"
     },
     {
+      "path": "../../core/agent"
+    },
+    {
+      "path": "../../llm/llm"
+    },
+    {
+      "path": "../../host/apiproxy"
+    },
+    {
       "path": "../../shell/shell-env"
     },
     {

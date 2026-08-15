@@ -15,6 +15,7 @@ import type { ConversationSnapshot } from './sessions/conversation.ts'
 import type { UseProjection } from './sessions/projection-store.ts'
 import { ConversationEventRegistry } from './conversation/event-registry.ts'
 import { ConversationViewRegistry } from './conversation/view-registry.ts'
+import { installBrowserPageListener } from './browser-page.ts'
 
 export { isAppendSurfaceEvent, isReplacementSurfaceEvent } from '@deepseek-ai/dsh-session/surface'
 
@@ -187,6 +188,7 @@ export const inject = ['connection', 'typert', 'remote', 'remote.commands']
  */
 export function apply(ctx: Context): void {
   ctx.plugin(SlotRegistry)
+  ctx.effect(() => installBrowserPageListener(), 'runtime: browser page listener')
   const conversation = {
     events: new ConversationEventRegistry(ctx),
     views: new ConversationViewRegistry(ctx),

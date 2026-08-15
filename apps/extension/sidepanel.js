@@ -14,11 +14,53 @@ function showStatus(html) {
   appFrame.style.display = 'none'
 }
 
+// Origin the app was handed to; page reports target exactly this origin.
+let appOrigin
+
 function showApp(url) {
+  appOrigin = new URL(url).origin
   appFrame.src = url
   appFrame.style.display = 'block'
   statusPane.classList.add('hidden')
 }
+
+// Report the active tab of the panel's window into the embedded app, which
+// attaches the newest report to the next prompt. Non-http(s) tabs (chrome://,
+// the extension itself) report nothing, so the last web page stays current.
+async function reportActivePage() {
+  if (appOrigin === undefined || appFrame.contentWindow === null) return
+  let tab
+  try {
+    // The panel's own window, not lastFocusedWindow: focus may sit on a
+    // DevTools or unrelated window whose "window" has no tabs at all.
+    const panelWindow = await chrome.windows.getCurrent()
+    ;[tab] = await chrome.tabs.query({ active: true, windowId: panelWindow.id })
+  } catch {
+    return
+  }
+  if (tab === undefined || typeof tab.url !== 'string' || !/^https?:\/\//.test(tab.url)) return
+  appFrame.contentWindow.postMessage(
+    { type: 'dsh:browser-page', url: tab.url, title: typeof tab.title === 'string' ? tab.title : '' },
+    appOrigin,
+  )
+}
+
+chrome.tabs.onActivated.addListener(() => { reportActivePage() })
+chrome.tabs.onUpdated.addListener((_tabId, changeInfo, tab) => {
+  if (tab.active && (changeInfo.url !== undefined || changeInfo.title !== undefined || changeInfo.status === 'complete')) {
+    reportActivePage()
+  }
+})
+// The app announces its listener after boot; the load-time report below can
+// fire before that listener exists, so the handshake re-reports.
+window.addEventListener('message', (event) => {
+  if (event.source === appFrame.contentWindow
+    && event.data !== null && typeof event.data === 'object'
+    && event.data.type === 'dsh:browser-page-ready') {
+    reportActivePage()
+  }
+})
+appFrame.addEventListener('load', () => { reportActivePage() })
 
 function escapeHtml(text) {
   return String(text).replace(/[&<>"']/g, character => `&#${character.charCodeAt(0)};`)

@@ -97,6 +97,8 @@ import { imageLimitsProjectionSchema, sessionListMetadataProjectionSchema } from
 import { questionResponsePayloadSchema } from './api/questions.schema.ts'
 import type { ClientResponse, RpcError, RpcReceipt, RpcRequest, RpcResponse } from './api/rpc.ts'
 import { RpcId } from './api/rpc.ts'
+import type { PromptBrowserPage } from './api/sessions.ts'
+import { BROWSER_PAGE_TITLE_MAX_CHARS, BROWSER_PAGE_URL_MAX_CHARS } from './api/sessions.ts'
 import type {
   AskUserQuestionAnswer, AskUserQuestionItem, AskUserQuestionRequest,
 } from '@deepseek-ai/dsh-user-questions'
@@ -275,6 +277,16 @@ function canonicalClientTimeZone(value: string): string | undefined {
     // Intl rejects unsupported zone names; the RPC maps that parser rejection below.
     return undefined
   }
+}
+
+/** Validate one browser-supplied active-page report at the wire boundary. */
+function isAdmissibleBrowserPage(value: PromptBrowserPage): boolean {
+  return typeof value === 'object' && value !== null
+    && typeof value.url === 'string'
+    && /^https?:\/\//.test(value.url)
+    && value.url.length <= BROWSER_PAGE_URL_MAX_CHARS
+    && typeof value.title === 'string'
+    && value.title.length <= BROWSER_PAGE_TITLE_MAX_CHARS
 }
 
 /** Read live abort state across awaits without treating it as synchronously immutable. */
@@ -2463,7 +2475,7 @@ export function createApiProxy(ctx: Context, defaults: ApiProxyDefaults): ApiPro
       },
 
       async prompt(request) {
-        const { sessionId, mode, content, clientTimeZone } = request.payload
+        const { sessionId, mode, content, clientTimeZone, browserPage } = request.payload
         const canonicalTimeZone = clientTimeZone === undefined
           ? undefined
           : canonicalClientTimeZone(clientTimeZone)
@@ -2474,14 +2486,22 @@ export function createApiProxy(ctx: Context, defaults: ApiProxyDefaults): ApiPro
             details: { value: clientTimeZone },
           })
         }
+        if (browserPage !== undefined && !isAdmissibleBrowserPage(browserPage)) {
+          return err(request, {
+            code: 'invalid-browser-page',
+            message: 'browserPage must carry a bounded http(s) url string and a bounded title string',
+            details: {},
+          })
+        }
         const resolved = await turnAgentFor<{ accepted: true }>(request, sessionId)
         if ('refused' in resolved) return resolved.refused
         const agent = resolved.agent
-        // Request identity and optional browser zone ride the exact durable user message.
+        // Request identity, optional browser zone, and optional browser page ride the exact durable user message.
         const source: MessageSource = {
           kind: 'user',
           rpcId: request.rpcId,
           ...(canonicalTimeZone === undefined ? {} : { clientTimeZone: canonicalTimeZone }),
+          ...(browserPage === undefined ? {} : { browserPage }),
         }
         const hasImage = content.some(part => part.type === 'image')
         const admit = async (): Promise<RpcResponse<{ accepted: true }>> => {

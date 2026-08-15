@@ -21,6 +21,7 @@ import type {} from '@deepseek-ai/cordis-plugin-loader'
 import type {} from '@deepseek-ai/dsh-host-webserver'
 import type {} from '@deepseek-ai/dsh-system-prompt'
 import type {} from '@deepseek-ai/dsh-shell-env'
+import { installBrowserPageContext } from './browser-page.ts'
 
 /** Stable Cordis plugin name. */
 export const name = 'web-app'
@@ -98,7 +99,8 @@ function webSurfacePrompt(webUrl: string): string {
     + 'Every other change — the apps/web shell and plain packages — requires rebuilding the affected Web artifacts and verifying this existing URL after a page refresh. '
   return `You are interacting with the user through the DeepSeek Harness Web GUI at ${webUrl}. `
     + 'When the user refers to "this page", "this GUI", or "this app" without naming another target, they mean this GUI. '
-    + 'The browser provides no implicit DOM, route, or screenshot context. '
+    + 'Aside from active-browser-tab snapshot messages provided when the GUI is embedded in the dsh browser extension panel, '
+    + 'the browser provides no implicit DOM, route, or screenshot context. '
     + updateContract
     + 'Starting another server does not update this GUI. '
     + 'The apps/web Vite entry builds the shell but is not a standalone application because only dsh web injects window.__DSH_BOOT__. '
@@ -145,6 +147,9 @@ export function apply(ctx: Context, config: Config): void {
         order: -98,
         text: () => webSurfacePrompt(localWebUrl(promptCtx)),
       })
+    })
+    ctx.inject(['agents'], (agentCtx) => {
+      installBrowserPageContext(agentCtx)
     })
     ctx.inject(['shellEnv'], (runtimeCtx) => {
       runtimeCtx.shellEnv.register({

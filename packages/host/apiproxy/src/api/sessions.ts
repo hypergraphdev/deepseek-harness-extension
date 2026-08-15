@@ -43,16 +43,31 @@ export interface SessionListMetadata {
   lastPromptAt: number | null
 }
 
+/** The active browser tab a panel-embedded client attached to one prompt. */
+export interface PromptBrowserPage {
+  /** The tab's http(s) URL, at most {@link BROWSER_PAGE_URL_MAX_CHARS} characters. */
+  url: string
+  /** The tab's title, possibly empty, at most {@link BROWSER_PAGE_TITLE_MAX_CHARS} characters. */
+  title: string
+}
+
+/** Host admission cap on {@link PromptBrowserPage.url}. */
+export const BROWSER_PAGE_URL_MAX_CHARS = 2048
+
+/** Host admission cap on {@link PromptBrowserPage.title}. */
+export const BROWSER_PAGE_TITLE_MAX_CHARS = 256
+
 declare module '@deepseek-ai/dsh-llm' {
   interface MessageSourceMap {
     /**
      * The prompt's rpcId is passed through MessageSource into the `user/message` event
      * (the client uses it to reconcile the optimistically
      * echoed provisional message with the event stream). kind stays `'user'` — the model face
-     * carries no transport vocabulary; rpcId and the optional Host-validated browser zone are
-     * durable JSON fields passed back to the client with the event.
+     * carries no transport vocabulary; rpcId, the optional Host-validated browser zone, and the
+     * optional extension-reported active browser page are durable JSON fields passed back to the
+     * client with the event.
      */
-    'user-rpc': { kind: 'user'; rpcId: RpcId; clientTimeZone?: string }
+    'user-rpc': { kind: 'user'; rpcId: RpcId; clientTimeZone?: string; browserPage?: PromptBrowserPage }
   }
 }
 
@@ -341,7 +356,9 @@ export interface SessionsApi {
    * Sends text and temporary image bytes to an ordinary session Agent after durable host admission.
    * Browser callers attach their current IANA zone;
    * the Host validates, canonicalizes, and records it on that exact user message. Omission remains
-   * valid for non-browser callers. Session-backed subagents reject with `agent-busy` and use
+   * valid for non-browser callers. A client embedded in the dsh browser extension panel may also
+   * attach the user's active browser page; the Host validates its scheme and bounds and records it
+   * on that exact user message. Session-backed subagents reject with `agent-busy` and use
    * `subagent.prompt`.
    */
   prompt(request: RpcRequest<{
@@ -349,6 +366,7 @@ export interface SessionsApi {
     mode: 'queue' | 'steer'
     content: PromptContentPart[]
     clientTimeZone?: string
+    browserPage?: PromptBrowserPage
   }>):
   Promise<RpcResponse<{ accepted: true; command?: { kind: 'success'; text?: string } }>>
 
