@@ -309,6 +309,15 @@
       config:
         providerName: fork
 
+    # Local coding CLIs as delegation targets: each provider wraps the
+    # official CLI in the delegating Session's workspace. Registering the
+    # provider is inert; a run fails only when the CLI is absent.
+    - id: subagent-codex
+      name: '@deepseek-ai/dsh-subagent-codex'
+
+    - id: subagent-claude-code
+      name: '@deepseek-ai/dsh-subagent-claude-code'
+
     # Continuable background children are selected per delegation tool. The
     # separately loaded follow-up tool registers the one global `send_message`.
     - id: tool-subagent-control
@@ -334,6 +343,25 @@
         provider: fork
         toolName: subagent_fork
         backgroundMode: one-shot
+
+    # One delegation tool per local coding CLI: "ask codex to …" / "ask
+    # claude to …" spawns the CLI in the workspace and returns its final
+    # answer. One-shot — the child is a task runner, not a resident teammate.
+    - id: tool-subagent-codex
+      name: '@deepseek-ai/dsh-tool-subagent'
+      config:
+        provider: codex
+        toolName: codex
+        backgroundMode: one-shot
+        maxDepth: provider-managed
+
+    - id: tool-subagent-claude-code
+      name: '@deepseek-ai/dsh-tool-subagent'
+      config:
+        provider: claude-code
+        toolName: claude_code
+        backgroundMode: one-shot
+        maxDepth: provider-managed
 
     # Optional direct-child return channel; absent from roots and one-shot agents.
     - id: tool-subagent-report
