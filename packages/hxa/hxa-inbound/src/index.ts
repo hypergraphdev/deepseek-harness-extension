@@ -19,6 +19,7 @@ import { boundContextSummary } from '@deepseek-ai/dsh-llm'
 import type {} from '@deepseek-ai/dsh-hxa'
 import type {} from '@deepseek-ai/dsh-agent'
 import type {} from '@deepseek-ai/dsh-system-prompt'
+import type {} from '@deepseek-ai/dsh-agent-default-model'
 
 /** Cordis plugin name used by loader diagnostics. */
 export const name = 'hxa-inbound'
@@ -203,14 +204,20 @@ export function apply(ctx: Context, config: Config): void {
     let handleDispose: (() => Promise<void>) | undefined
     void (async () => {
       try {
-        const agentOptions: { provider?: string; model?: string } = {
-          ...(config.provider !== undefined ? { provider: config.provider } : {}),
-          ...(config.model !== undefined ? { model: config.model } : {}),
+        // The prompt's {{model}}/{{provider}} variables read the agent's own
+        // options, so an agent created without them fails prompt assembly;
+        // fall back to the deployment default rather than leaving them unset.
+        const fallback = agentCtx.get('agentDefaultModel')?.currentSelection()
+        const agentOptions = {
+          provider: config.provider ?? fallback?.provider,
+          model: config.model ?? fallback?.model,
         }
         const handle = await agentCtx.agents.create({
           sessionId: SessionId(config.sessionId ?? 'hxa-main'),
           meta: { cwd: process.cwd() },
-          ...(Object.keys(agentOptions).length > 0 ? { agentOptions } : {}),
+          ...(agentOptions.provider === undefined || agentOptions.model === undefined
+            ? {}
+            : { agentOptions: { provider: agentOptions.provider, model: agentOptions.model } }),
           // Give this agent the coordinator persona, scoped to its own world.
           setup: (world) => {
             if (world.get('systemPrompt') === undefined) return

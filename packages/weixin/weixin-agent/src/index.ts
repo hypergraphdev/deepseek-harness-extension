@@ -18,6 +18,7 @@ import { boundContextSummary } from '@deepseek-ai/dsh-llm'
 import type { Agent } from '@deepseek-ai/dsh-agent'
 import type {} from '@deepseek-ai/dsh-weixin'
 import type {} from '@deepseek-ai/dsh-system-prompt'
+import type {} from '@deepseek-ai/dsh-agent-default-model'
 
 /** Cordis plugin name used by loader diagnostics. */
 export const name = 'weixin-agent'
@@ -69,14 +70,20 @@ export function apply(ctx: Context, config: Config): void {
     let dispose: (() => Promise<void>) | undefined
     void (async () => {
       try {
-        const options: { provider?: string; model?: string } = {
-          ...(config.provider === undefined ? {} : { provider: config.provider }),
-          ...(config.model === undefined ? {} : { model: config.model }),
+        // The prompt's {{model}}/{{provider}} variables read the agent's own
+        // options, so an agent created without them fails prompt assembly;
+        // fall back to the deployment default rather than leaving them unset.
+        const fallback = agentCtx.get('agentDefaultModel')?.currentSelection()
+        const options = {
+          provider: config.provider ?? fallback?.provider,
+          model: config.model ?? fallback?.model,
         }
         const handle = await agentCtx.agents.create({
           sessionId: SessionId(config.sessionId ?? 'weixin-main'),
           meta: { cwd: process.cwd() },
-          ...(Object.keys(options).length > 0 ? { agentOptions: options } : {}),
+          ...(options.provider === undefined || options.model === undefined
+            ? {}
+            : { agentOptions: { provider: options.provider, model: options.model } }),
           setup: (world) => {
             if (world.get('systemPrompt') === undefined) return
             world.systemPrompt.section({ name: 'weixin:persona', order: 0, text: WEIXIN_PERSONA })
@@ -105,6 +112,9 @@ export function apply(ctx: Context, config: Config): void {
       userId: message.fromUserId,
       ...(message.contextToken === undefined ? {} : { contextToken: message.contextToken }),
     }
+    // The user is waiting on a model turn; show the chat's typing dots
+    // until the reply lands.
+    void ctx.weixin.setTyping(message.fromUserId, true)
     agent.followup(createUserMessage({
       content: [{ type: 'text', text: message.text }],
       source: {
@@ -133,5 +143,6 @@ export function apply(ctx: Context, config: Config): void {
       : text
     void ctx.weixin.send(target.userId, bounded, target.contextToken)
       .catch((error: unknown) => { ctx.logger.warn(`weixin-agent: reply failed: ${String(error)}`) })
+      .finally(() => { void ctx.weixin.setTyping(target.userId, false) })
   })
 }

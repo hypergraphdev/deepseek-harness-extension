@@ -241,6 +241,28 @@ export async function getUpdates(baseUrl: string, token: string, cursor: string,
   }
 }
 
+/**
+ * Show or clear the typing indicator in one user's chat. The indicator is a
+ * courtesy: every failure is the caller's to ignore, since a missing dot
+ * never blocks the reply itself.
+ * @param baseUrl - the account's API base.
+ * @param token - the bot token.
+ * @param userId - the chat to show the indicator in.
+ * @param typing - true while composing, false to clear.
+ */
+export async function sendTyping(baseUrl: string, token: string, userId: string, typing: boolean): Promise<void> {
+  // The ticket is per-conversation and short-lived, so it is fetched with
+  // the indicator rather than cached.
+  const config = await postJson(baseUrl, 'ilink/bot/getconfig', token, { ilink_user_id: userId }, 10_000)
+  const ticket = readString(config as Record<string, unknown>, 'typing_ticket')
+  if (ticket === undefined) return
+  await postJson(baseUrl, 'ilink/bot/sendtyping', token, {
+    ilink_user_id: userId,
+    typing_ticket: ticket,
+    status: typing ? 1 : 2,
+  }, 10_000)
+}
+
 /** Build the one-off client id the API uses for idempotency. */
 function clientId(): string {
   return `dsh-weixin:${String(Date.now())}-${Math.random().toString(16).slice(2, 10)}`

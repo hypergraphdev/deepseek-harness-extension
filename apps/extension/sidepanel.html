@@ -27,7 +27,10 @@
 </head>
 <body>
   <div id="status">Connecting to dsh…</div>
-  <iframe id="app" title="DeepSeek Harness" allow="microphone"></iframe>
+  <!-- The embedded app needs both delegated permissions: dictation records
+       audio, and message actions write the clipboard — a cross-origin frame
+       is granted neither by default. -->
+  <iframe id="app" title="DeepSeek Harness" allow="microphone; clipboard-write"></iframe>
   <button id="capture" type="button" title="把当前标签页的正文发给智能体">📄 读取本页</button>
   <script src="sidepanel.js"></script>
 </body>

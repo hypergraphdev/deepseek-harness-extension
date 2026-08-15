@@ -32,11 +32,13 @@ export const inject = ['slots', 'locale']
  */
 export function apply(ctx: ClientContext): void {
   ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'ui-settings-weixin: dictionaries')
+  const t = ctx.locale.bind(NS)
 
   ctx.slots.inject('settings.section', () => ctx.slots.register({
     name: 'settings.section',
-    id: 'weixin',
+    id: 'messaging',
     order: 40,
     locale: NS,
+    label: () => t('nav'),
   }, WeixinSection))
 }

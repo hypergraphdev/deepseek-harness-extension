@@ -16,7 +16,7 @@ import { Context, Service } from '@deepseek-ai/cordis'
 import z from '@deepseek-ai/schemastery'
 import { dshHomePath } from '@deepseek-ai/dsh-home-paths'
 import {
-  getUpdates, ILINK_BASE_URL, pollQr, requestQr, SESSION_EXPIRED_CODE, sendText,
+  getUpdates, ILINK_BASE_URL, pollQr, requestQr, SESSION_EXPIRED_CODE, sendText, sendTyping,
 } from './protocol.ts'
 import type { InboundText, QrChallenge } from './protocol.ts'
 
@@ -240,6 +240,19 @@ export class WeixinRuntime extends Service {
   async send(toUserId: string, text: string, contextToken?: string): Promise<void> {
     if (this.link === undefined) throw new WeixinError('WEIXIN_NOT_LINKED', 'no WeChat account is linked')
     await sendText(this.link.baseUrl, this.link.botToken, toUserId, text, contextToken)
+  }
+
+  /**
+   * Show or clear the typing indicator in one chat. Failures are swallowed:
+   * the indicator is a courtesy, and losing it must never cost the reply.
+   * @param toUserId - the chat to indicate in.
+   * @param typing - true while composing, false to clear.
+   */
+  async setTyping(toUserId: string, typing: boolean): Promise<void> {
+    if (this.link === undefined) return
+    try {
+      await sendTyping(this.link.baseUrl, this.link.botToken, toUserId, typing)
+    } catch { /* an absent indicator is not worth surfacing */ }
   }
 
   /** Run the long-poll receive loop until the plugin or the link goes away. */

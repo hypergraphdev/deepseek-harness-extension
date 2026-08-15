@@ -2,7 +2,7 @@
 
 /** Simplified Chinese dictionary (the key-set source of truth). */
 export const zh = {
-  nav: '微信',
+  nav: '消息渠道',
   lead: '扫码后，微信里发来的消息由本机智能体回答，回复直接发回聊天。只需关联一次。',
   'state.linked': '已关联',
   'action.link': '生成二维码',
@@ -20,7 +20,7 @@ export type WeixinKey = keyof typeof zh
 
 /** English dictionary, checked complete against the zh key set. */
 export const en = {
-  nav: 'WeChat',
+  nav: 'Messaging',
   lead: 'Scan once to link an account: messages sent to it are answered by this workstation\'s agent, and replies go straight back to the chat.',
   'state.linked': 'Linked',
   'action.link': 'Show QR code',
