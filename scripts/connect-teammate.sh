@@ -25,7 +25,8 @@ set -euo pipefail
 # Pinned to a daemon release that authenticates over the `?key=` query string,
 # matching the hub's WebSocket endpoint. Newer daemon releases switched to an
 # Authorization header and fail against hubs that read `?key=`. Override with
-# SLOCK_DAEMON_PACKAGE once the hub accepts header auth.
+# SLOCK_DAEMON_PACKAGE — an npm spec or a local package directory (a checkout
+# with a built dist/), e.g. SLOCK_DAEMON_PACKAGE=/path/to/slock-gateway.
 DAEMON_PACKAGE="${SLOCK_DAEMON_PACKAGE:-@slock-ai/daemon@0.39.0}"
 
 usage() {
