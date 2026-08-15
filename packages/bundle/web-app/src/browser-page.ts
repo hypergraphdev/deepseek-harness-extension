@@ -18,8 +18,8 @@ import type {} from '@deepseek-ai/dsh-host-apiproxy/api'
 /** Durable `source.plugin` name attributing every snapshot this module appends. */
 export const BROWSER_PAGE_CONTEXT_SOURCE = 'web-surface-browser-page'
 
-/** The newest extension-reported page among the step's entering messages. */
-function newestEnteringPage(messages: readonly UserMessage[]): PromptBrowserPage | undefined {
+/** The newest extension-reported page state among the step's entering messages; `null` is an explicit "no active page". */
+function newestEnteringPage(messages: readonly UserMessage[]): PromptBrowserPage | null | undefined {
   for (let index = messages.length - 1; index >= 0; index -= 1) {
     const source = messages[index]?.source
     if (source !== undefined && source.kind === 'user' && 'browserPage' in source
@@ -43,8 +43,11 @@ function latestSnapshotText(agent: Agent): string | undefined {
   return undefined
 }
 
-/** Render one page sample as the model-facing snapshot line. */
-function renderBrowserPage(page: PromptBrowserPage): string {
+/** Render one page state as the model-facing snapshot line. */
+function renderBrowserPage(page: PromptBrowserPage | null): string {
+  if (page === null) {
+    return 'The user\'s active browser tab is no longer a web or file page; earlier browser-page snapshots are stale.'
+  }
   const title = page.title.length === 0 ? 'untitled page' : JSON.stringify(page.title)
   return `The user's active browser tab is ${title} at ${page.url}.`
 }
@@ -61,7 +64,11 @@ export function installBrowserPageContext(ctx: Context): void {
     const page = newestEnteringPage(decision.messages)
     if (page === undefined) return decision
     const text = renderBrowserPage(page)
-    if (latestSnapshotText(agent) === text) return decision
+    const latest = latestSnapshotText(agent)
+    if (latest === text) return decision
+    // A "no active page" report corrects an earlier page snapshot; with no
+    // earlier snapshot there is nothing to correct.
+    if (page === null && latest === undefined) return decision
     return {
       kind: 'enter',
       messages: [

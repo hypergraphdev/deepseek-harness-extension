@@ -25,8 +25,10 @@ function showApp(url) {
 }
 
 // Report the active tab of the panel's window into the embedded app, which
-// attaches the newest report to the next prompt. Non-http(s) tabs (chrome://,
-// the extension itself) report nothing, so the last web page stays current.
+// attaches the newest report to the next prompt. Every change reports: the
+// app classifies web and file pages as pages and anything else (chrome://,
+// about:) as "no active page", so a closed page never lingers as stale
+// context.
 async function reportActivePage() {
   if (appOrigin === undefined || appFrame.contentWindow === null) return
   let tab
@@ -38,7 +40,7 @@ async function reportActivePage() {
   } catch {
     return
   }
-  if (tab === undefined || typeof tab.url !== 'string' || !/^https?:\/\//.test(tab.url)) return
+  if (tab === undefined || typeof tab.url !== 'string') return
   appFrame.contentWindow.postMessage(
     { type: 'dsh:browser-page', url: tab.url, title: typeof tab.title === 'string' ? tab.title : '' },
     appOrigin,

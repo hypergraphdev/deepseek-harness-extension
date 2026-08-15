@@ -43,9 +43,13 @@ export interface SessionListMetadata {
   lastPromptAt: number | null
 }
 
-/** The active browser tab a panel-embedded client attached to one prompt. */
+/**
+ * The active browser tab a panel-embedded client attached to one prompt.
+ * `null` in its carrying slots means the panel is attached but the active
+ * tab is not a web or file page, superseding any earlier page.
+ */
 export interface PromptBrowserPage {
-  /** The tab's http(s) URL, at most {@link BROWSER_PAGE_URL_MAX_CHARS} characters. */
+  /** The tab's http(s) or file URL, at most {@link BROWSER_PAGE_URL_MAX_CHARS} characters. */
   url: string
   /** The tab's title, possibly empty, at most {@link BROWSER_PAGE_TITLE_MAX_CHARS} characters. */
   title: string
@@ -67,7 +71,7 @@ declare module '@deepseek-ai/dsh-llm' {
      * optional extension-reported active browser page are durable JSON fields passed back to the
      * client with the event.
      */
-    'user-rpc': { kind: 'user'; rpcId: RpcId; clientTimeZone?: string; browserPage?: PromptBrowserPage }
+    'user-rpc': { kind: 'user'; rpcId: RpcId; clientTimeZone?: string; browserPage?: PromptBrowserPage | null }
   }
 }
 
@@ -366,7 +370,7 @@ export interface SessionsApi {
     mode: 'queue' | 'steer'
     content: PromptContentPart[]
     clientTimeZone?: string
-    browserPage?: PromptBrowserPage
+    browserPage?: PromptBrowserPage | null
   }>):
   Promise<RpcResponse<{ accepted: true; command?: { kind: 'success'; text?: string } }>>
 

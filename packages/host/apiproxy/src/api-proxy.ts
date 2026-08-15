@@ -279,11 +279,12 @@ function canonicalClientTimeZone(value: string): string | undefined {
   }
 }
 
-/** Validate one browser-supplied active-page report at the wire boundary. */
-function isAdmissibleBrowserPage(value: PromptBrowserPage): boolean {
-  return typeof value === 'object' && value !== null
+/** Validate one browser-supplied active-page report at the wire boundary; `null` is the valid "no active page" report. */
+function isAdmissibleBrowserPage(value: PromptBrowserPage | null): boolean {
+  if (value === null) return true
+  return typeof value === 'object'
     && typeof value.url === 'string'
-    && /^https?:\/\//.test(value.url)
+    && /^(?:https?|file):\/\//.test(value.url)
     && value.url.length <= BROWSER_PAGE_URL_MAX_CHARS
     && typeof value.title === 'string'
     && value.title.length <= BROWSER_PAGE_TITLE_MAX_CHARS
