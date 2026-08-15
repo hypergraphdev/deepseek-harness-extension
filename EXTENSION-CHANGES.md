@@ -30,6 +30,29 @@ This repository is an independent edition of [deepseek-ai/deepseek-harness](http
 - 侧边栏内识别运行在扩展顶级页面并桥接回应用（绕过 Chrome 对跨源 iframe 的 Web Speech 限制），配套一次性的扩展麦克风授权页；
 - 提交：`0b81b3cf`、`44f340a5`、`90ce867b`。
 
+### 5. AI 团队：本机专家 + 远程队友
+
+把工作台从「单个 agent」变成「你的常驻席位 + 一支可召唤的团队」。两条互补的路径：
+
+**本机专家（进程内，无需任何服务）**——主 agent 一句话直接拉起本机 CLI 干活、拿回结果：
+
+- 新增 `codex` / `claude_code` 两个委派工具（`dsh-base` 组合了上游自带的 `subagent-codex` / `subagent-claude-code` provider），在会话工作区内起官方 CLI，一次性任务返回最终答案；
+- 说「让 codex 看看这段代码」即可，不经过任何 hub 或 daemon。
+
+**HXA 团队（跨机器，持久在线）**——新增 `packages/hxa/` 能力家族，接入自托管的 [HXA Connect](https://github.com/hypergraphdev/hxa-connect) hub：
+
+- `dsh-hxa`（`ctx.hxa`）：org 级 bot 连接（联系人 / DM / 离线补收 / WebSocket 票据），响应过线校验、结构化错误码；**未配置时完全休眠**，不注册任何工具、不占一个 token；
+- `dsh-tool-hxa`：模型工具 `hxa_contacts`（花名册+在线状态）、`hxa_send`（给队友派活）、`hxa_inbox`（增量收件，带水位线）；
+- `dsh-hxa-inbound`：**入站桥**——一条 WebSocket 让本机 bot 常驻在线（presence 与 coordinator 相互独立，互不拖累），队友来消息实时唤醒一个带 `hxa:coordinator` 人设的协调 agent，由它用自己的 `hxa_send` 应答；消息经 `followup` 落成持久 `user/message`，满足「模型可见 ⟺ 已记录」；
+- `scripts/connect-teammate.sh <teammate>`：一条命令把本机 CLI 挂成 org 里的在线队友（读环境或 `.env` 的 `HXA_HUB_URL` / `HXA_<NAME>_TOKEN`，零硬编码路径，daemon 包可用 `SLOCK_DAEMON_PACKAGE` 覆盖为本地 checkout）；
+- 提交：`930b5bc6`、`ae1ee795`、`b9ad8615`、`cb959a02`、`95fe159f`。
+
+### 6. 侧边栏 Agents 面板
+
+- 侧栏新增 `sidebar.agents` 座位与 `dsh-client-ui-agents` 插件：只读团队花名册，每行一个队友（在线绿点 + 角色），20 秒轮询刷新；
+- 数据经宿主新增的同源 `GET /api/hxa/contacts` 路由（精确路由，拒绝跨站请求）取自 `ctx.hxa`；HXA 休眠时路由返回 404、面板整个不渲染，未配置的部署一个像素都不占；
+- 提交：`668eb169`。
+
 ## 快速开始
 
 1. 构建并注册 native host（macOS）：
@@ -71,6 +94,48 @@ vision-bridge:
 ```
 
 配置热加载，无需重启。生效后：文本模型的会话里上传图片、`read_image` 读本地图片都会经 gemma4 自动转写为文字描述，模型还可用 `analyze_image` 工具对图追问。注意键名全部小写（`model:` 写成 `Model:` 会被丢弃导致半配置休眠）。
+
+### 呼叫本机 Codex / Claude（开箱即用）
+
+无需任何配置。装了官方 CLI（`codex` / `claude` 在 PATH 上）就能对主 agent 说「让 codex 重构这个函数」「让 claude 看看这段代码」——它会在当前工作区起 CLI、把最终答案带回来。CLI 缺失时该工具调用失败，不影响其他功能。
+
+### 启用 HXA 团队（可选，跨机器协作需要）
+
+需要一个自托管的 [HXA Connect](https://github.com/hypergraphdev/hxa-connect) hub（单进程 + SQLite，`docker compose up` 即起）。
+
+1. **在 hub 上建 bot**：给工作台建一个主 bot（下例 `dsh-main`），每个队友各建一个（如 `codex`、`hermes`）。建完记得设 runtime，否则 hub 会一律兜底成 `claude`：
+
+```sh
+curl -X PATCH https://<your-hub>/api/me/profile \
+  -H "authorization: Bearer <该 bot 的 token>" \
+  -H 'content-type: application/json' \
+  -d '{"runtime":"codex"}'   # claude / codex / gemini / cursor / copilot / kimi
+```
+
+2. **配置 dsh**：hub 地址写进 `~/.dsh/cordis.patch.yml`，主 bot 的 token 走环境变量（仓库根 `.env` 即可）：
+
+```yaml
+- id: hxa
+  config:
+    url: https://<your-hub>
+```
+
+```sh
+# .env
+HXA_HUB_URL=https://<your-hub>
+HXA_BOT_TOKEN=<主 bot 的 token>
+HXA_CODEX_TOKEN=<codex 队友的 token>
+```
+
+重启后主 bot 自动在线，侧栏出现 Agents 面板，主 agent 获得 `hxa_*` 工具。
+
+3. **让本机 CLI 成为在线队友**（可选）：
+
+```sh
+scripts/connect-teammate.sh codex
+```
+
+daemon 常驻期间该 bot 在花名册里显示在线，主 agent 就能给它派活、收结果。远程队友（如部署在服务器上的 Hermes）由对应框架自己的 HXA 插件接入，不需要这个脚本。
 
 ## 同步上游
 
