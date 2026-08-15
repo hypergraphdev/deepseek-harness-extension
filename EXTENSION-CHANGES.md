@@ -40,13 +40,37 @@ pnpm dsh install-browser-host --extension <你的扩展id>
 ```
 
 2. `chrome://extensions` 开启开发者模式，"加载已解压的扩展程序"选择 `apps/extension/`，记下扩展 id 后重跑上一步；
-3. 点工具栏图标打开侧边栏即用。vision-bridge 在 `~/.dsh/settings.yaml` 配置：
+3. 点工具栏图标打开侧边栏即用。
+
+### 启用 vision-bridge（可选，读图能力需要）
+
+vision-bridge 需要一个**本地多模态模型**做转写引擎，先安装 [ollama](https://ollama.com) 并拉取模型：
+
+```sh
+brew install ollama          # 或从 ollama.com 下载安装包
+ollama pull gemma4:12b       # 多模态小模型，约 7.6 GB；任何支持图片输入的模型均可
+ollama serve                 # 桌面版 ollama 会自动常驻，可跳过这步
+```
+
+然后在 `~/.dsh/settings.yaml` 配置**两段**：先把 ollama 注册为 provider，再指给 vision-bridge（只配后一段会因 provider 不存在而失效）：
 
 ```yaml
+llm-pi-ai:
+  providers:
+    ollama:
+      displayName: ollama
+      apiKeyEnv: OLLAMA_API_KEY
+      api: openai-completions
+      baseURL: http://127.0.0.1:11434/v1
+      defaultInput: [ text, image ]
+      models:
+        - id: gemma4:12b
 vision-bridge:
   provider: ollama
   model: gemma4:12b
 ```
+
+配置热加载，无需重启。生效后：文本模型的会话里上传图片、`read_image` 读本地图片都会经 gemma4 自动转写为文字描述，模型还可用 `analyze_image` 工具对图追问。注意键名全部小写（`model:` 写成 `Model:` 会被丢弃导致半配置休眠）。
 
 ## 同步上游
 
