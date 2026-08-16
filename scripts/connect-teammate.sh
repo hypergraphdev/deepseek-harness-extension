@@ -120,6 +120,58 @@ hub_roster() {
     | tr '{' '\n' | sed -nE 's/.*"name":"([^"]*)".*"online":(true|false).*/\1 \2/p'
 }
 
+# Kill one process and its whole descendant tree, TERM first then KILL.
+kill_tree() {
+  local pid="$1" child
+  for child in $(pgrep -P "$pid" 2> /dev/null); do
+    kill_tree "$child"
+  done
+  kill -TERM "$pid" 2> /dev/null || true
+  for _ in 1 2 3; do
+    kill -0 "$pid" 2> /dev/null || return 0
+    sleep 1
+  done
+  kill -KILL "$pid" 2> /dev/null || true
+}
+
+# Leader pids of every slock daemon on this host (the `npm exec`/npx front
+# process), whether or not this script started it. Children are reached
+# through kill_tree, so only tree roots are listed.
+daemon_leader_pids() {
+  local pid ppid
+  # shellcheck disable=SC2009 -- pgrep -f matches the whole tree; ps lets us keep roots only
+  ps -axo pid=,ppid=,command= | grep -E "npm exec @slock-ai/daemon|npx .*@slock-ai/daemon" | grep -v grep \
+    | while read -r pid ppid _; do
+      # A leader's parent is a shell/launcher, not another matched process.
+      printf '%s\n' "$pid"
+    done
+}
+
+# The --api-key value in one pid's command line, or empty.
+daemon_token_of() {
+  ps -o command= -p "$1" 2> /dev/null | sed -nE 's/.*--api-key ([^ ]+).*/\1/p'
+}
+
+# Resolve a daemon token to a configured teammate name, or empty.
+teammate_for_token() {
+  local candidate
+  while IFS= read -r candidate; do
+    [ -n "$candidate" ] || continue
+    [ "$(token_for "$candidate")" = "$1" ] && { printf '%s' "$candidate"; return 0; }
+  done <<< "$(configured_teammates)"
+  return 0
+}
+
+# Unmanaged daemon leaders: every daemon on the host except the managed pids.
+unmanaged_daemons() {
+  local pid managed
+  managed="$(managed_teammates | while IFS= read -r name; do pid_of "$name" 2> /dev/null || true; done)"
+  for pid in $(daemon_leader_pids); do
+    printf '%s\n' "$managed" | grep -qx "$pid" && continue
+    printf '%s\n' "$pid"
+  done
+}
+
 start_one() {
   local teammate="$1"
   shift
@@ -128,6 +180,13 @@ start_one() {
     return 0
   fi
   require_token "$teammate"
+  local other
+  for other in $(unmanaged_daemons); do
+    if [ "$(daemon_token_of "$other")" = "$token" ]; then
+      echo "teammate '$teammate' is already connected by an unmanaged daemon (pid $other); run '$0 stop $teammate' first"
+      return 0
+    fi
+  done
   mkdir -p "$state_dir"
   local log="$state_dir/$teammate.log"
   # The pinned daemon takes the token as a command-line flag; it is briefly
@@ -143,28 +202,45 @@ start_one() {
 
 stop_one() {
   local teammate="$1"
-  local pid
-  if ! pid="$(pid_of "$teammate")"; then
-    echo "teammate '$teammate' has no pidfile (not managed by this script)"
-    return 0
-  fi
-  if kill -0 "$pid" 2> /dev/null; then
-    # npx fronts the daemon: terminate the child tree first, then the leader.
-    pkill -TERM -P "$pid" 2> /dev/null || true
-    kill -TERM "$pid" 2> /dev/null || true
-    for _ in 1 2 3 4 5; do
-      kill -0 "$pid" 2> /dev/null || break
-      sleep 1
-    done
+  local pid stopped=0
+  if pid="$(pid_of "$teammate")"; then
     if kill -0 "$pid" 2> /dev/null; then
-      pkill -KILL -P "$pid" 2> /dev/null || true
-      kill -KILL "$pid" 2> /dev/null || true
+      kill_tree "$pid"
+      echo "stopped teammate '$teammate' (pid $pid)"
+    else
+      echo "teammate '$teammate' was not running (stale pidfile removed)"
     fi
-    echo "stopped teammate '$teammate' (pid $pid)"
-  else
-    echo "teammate '$teammate' was not running (stale pidfile removed)"
+    rm -f "$state_dir/$teammate.pid"
+    stopped=1
   fi
-  rm -f "$state_dir/$teammate.pid"
+  # Takeover: an unmanaged daemon carrying this teammate's token dies too.
+  local other token_value
+  token_value="$(token_for "$teammate")"
+  if [ -n "$token_value" ]; then
+    for other in $(unmanaged_daemons); do
+      if [ "$(daemon_token_of "$other")" = "$token_value" ]; then
+        kill_tree "$other"
+        echo "stopped unmanaged daemon for '$teammate' (pid $other)"
+        stopped=1
+      fi
+    done
+  fi
+  [ "$stopped" -eq 1 ] || echo "teammate '$teammate': nothing running (no pidfile, no matching daemon)"
+}
+
+# Kill every unmanaged daemon on the host, naming the teammate when its token
+# matches a configured one; otherwise identified by a token prefix.
+stop_unmanaged_all() {
+  local pid token_value name label found=0
+  for pid in $(unmanaged_daemons); do
+    found=1
+    token_value="$(daemon_token_of "$pid")"
+    name="$(teammate_for_token "$token_value")"
+    label="${name:-token ${token_value:0:12}…}"
+    kill_tree "$pid"
+    echo "stopped unmanaged daemon (pid $pid, $label)"
+  done
+  return $((1 - found))
 }
 
 status_all() {
@@ -185,6 +261,13 @@ status_all() {
       state="dead (stale pidfile)"
     elif [ -n "$(token_for "$teammate")" ]; then
       state="stopped"
+      local unmanaged_pid
+      for unmanaged_pid in $(unmanaged_daemons); do
+        if [ "$(daemon_token_of "$unmanaged_pid")" = "$(token_for "$teammate")" ]; then
+          state="running unmanaged (pid $unmanaged_pid)"
+          break
+        fi
+      done
     else
       state="no token"
     fi
@@ -199,6 +282,12 @@ status_all() {
     fi
     echo "$teammate: $state$org"
   done <<< "$names"
+  local pid token_value
+  for pid in $(unmanaged_daemons); do
+    token_value="$(daemon_token_of "$pid")"
+    [ -n "$(teammate_for_token "$token_value")" ] && continue
+    echo "unrecognized daemon: pid $pid (token ${token_value:0:12}… matches no configured teammate)"
+  done
 }
 
 [ "$#" -ge 1 ] || usage 1
@@ -236,7 +325,8 @@ case "$command" in
         found=1
         stop_one "$teammate"
       done <<< "$(managed_teammates)"
-      [ "$found" -eq 1 ] || echo "nothing to stop (no pidfiles under $state_dir)"
+      stop_unmanaged_all && found=1
+      [ "$found" -eq 1 ] || echo "nothing to stop (no pidfiles under $state_dir, no daemons found)"
     else
       for teammate in "$@"; do
         stop_one "$teammate"
