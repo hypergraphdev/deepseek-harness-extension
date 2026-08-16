@@ -35,10 +35,20 @@ describe('dsh-base bundle', () => {
     expect(rows.find(row => row.id === 'session-telemetry-otel')?.config?.['mode']).toEqual({
       __jsExpr: "process.env.DSH_TELEMETRY_MODE || 'DISABLED'",
     })
-    expect(rows.filter(row => row.id === 'subagent-codex')).toHaveLength(0)
-    expect(rows.filter(row => row.id === 'subagent-claude-code')).toHaveLength(0)
-    expect(manifest.dependencies).not.toHaveProperty('@deepseek-ai/dsh-subagent-codex')
-    expect(manifest.dependencies).not.toHaveProperty('@deepseek-ai/dsh-subagent-claude-code')
+    // Upstream keeps the local coding CLIs to opt-in example compositions.
+    // This edition ships them as defaults instead: the workstation's whole
+    // premise is delegating to whatever is already installed, and a request
+    // to "ask codex" should not need a profile edit first. The cost is two
+    // extra tool schemas in every request, which is the trade this edition
+    // takes deliberately. Registering a provider starts no process, and a
+    // missing CLI fails only that tool call.
+    expect(rows.filter(row => row.id === 'subagent-codex')).toHaveLength(1)
+    expect(rows.filter(row => row.id === 'subagent-claude-code')).toHaveLength(1)
+    expect(manifest.dependencies).toHaveProperty('@deepseek-ai/dsh-subagent-codex')
+    expect(manifest.dependencies).toHaveProperty('@deepseek-ai/dsh-subagent-claude-code')
+    // The delegation tools the model actually sees, one per CLI.
+    expect(rows.find(row => row.id === 'tool-subagent-codex')?.config?.['toolName']).toBe('codex')
+    expect(rows.find(row => row.id === 'tool-subagent-claude-code')?.config?.['toolName']).toBe('claude_code')
   })
 
   it('gates each shell stack by platform with a symmetric disabled expression', () => {
