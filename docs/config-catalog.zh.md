@@ -803,6 +803,46 @@ export interface Config {
 
 来源：[`packages/host/webserver/src/index.ts:45`](../packages/host/webserver/src/index.ts)
 
+<a id="deepseek-aidsh-hxa"></a>
+
+## `@deepseek-ai/dsh-hxa`
+
+```ts config-catalog
+/** Hub endpoint and bot credential resolution. */
+export interface Config {
+  /** HXA Connect base URL (for example `https://hxa.example.com/connect`). Omitted = dormant. */
+  url?: string
+  /** Environment variable holding the bot token. The variable being unset keeps the service dormant. */
+  tokenEnv?: string
+  /** Per-request timeout in milliseconds. */
+  requestTimeoutMs?: number
+}
+```
+
+来源：[`packages/hxa/hxa/src/index.ts:31`](../packages/hxa/hxa/src/index.ts)
+
+<a id="deepseek-aidsh-hxa-inbound"></a>
+
+## `@deepseek-ai/dsh-hxa-inbound`
+
+依赖：`hxa` · `agents`
+
+```ts config-catalog
+/** Coordinator session identity and reconnection bounds. Invalid values fail plugin load. */
+export interface Config {
+  /** Stable session id for the coordinator agent that answers inbound messages. */
+  sessionId?: string
+  /** Provider for the coordinator agent; omitted uses the deployment default. */
+  provider?: string
+  /** Model for the coordinator agent; omitted uses the deployment default. */
+  model?: string
+  /** Maximum reconnect backoff in milliseconds. */
+  reconnectMaxMs?: number
+}
+```
+
+来源：[`packages/hxa/hxa-inbound/src/index.ts:33`](../packages/hxa/hxa-inbound/src/index.ts)
+
 <a id="deepseek-aidsh-invariants"></a>
 
 ## `@deepseek-ai/dsh-invariants`
@@ -2447,6 +2487,24 @@ export interface Config {
 
 来源：[`packages/goal/tool-goal/src/index.ts:26`](../packages/goal/tool-goal/src/index.ts)
 
+<a id="deepseek-aidsh-tool-hxa"></a>
+
+## `@deepseek-ai/dsh-tool-hxa`
+
+依赖：`hxa` · `tools` · `systemPrompt`
+
+```ts config-catalog
+/** Inbox expansion bounds. Invalid values fail plugin load. */
+export interface Config {
+  /** Maximum unread channels expanded into messages per inbox check. */
+  maxInboxChannels?: number
+  /** Maximum messages fetched per expanded channel. */
+  maxChannelMessages?: number
+}
+```
+
+来源：[`packages/hxa/tool-hxa/src/index.ts:25`](../packages/hxa/tool-hxa/src/index.ts)
+
 <a id="deepseek-aidsh-tool-jobs"></a>
 
 ## `@deepseek-ai/dsh-tool-jobs`
@@ -3023,6 +3081,44 @@ export interface Config {
 
 来源：[`packages/web/web-search-perplexity/src/index.ts:32`](../packages/web/web-search-perplexity/src/index.ts)
 
+<a id="deepseek-aidsh-weixin"></a>
+
+## `@deepseek-ai/dsh-weixin`
+
+```ts config-catalog
+/** Receive-loop tuning. Invalid values fail plugin load. */
+export interface Config {
+  /** Delay before retrying after a failed poll. */
+  retryDelayMs?: number
+  /** Delay after repeated failures. */
+  backoffDelayMs?: number
+}
+```
+
+来源：[`packages/weixin/weixin/src/index.ts:50`](../packages/weixin/weixin/src/index.ts)
+
+<a id="deepseek-aidsh-weixin-agent"></a>
+
+## `@deepseek-ai/dsh-weixin-agent`
+
+依赖：`weixin` · `agents` · `agentLoop`
+
+```ts config-catalog
+/** Conversation identity and reply bounds. Invalid values fail plugin load. */
+export interface Config {
+  /** Stable session id for the agent that answers WeChat. */
+  sessionId?: string
+  /** Provider for that agent; omitted uses the deployment default. */
+  provider?: string
+  /** Model for that agent; omitted uses the deployment default. */
+  model?: string
+  /** Cap on one outbound reply; WeChat rejects very long messages. */
+  replyMaxChars?: number
+}
+```
+
+来源：[`packages/weixin/weixin-agent/src/index.ts:32`](../packages/weixin/weixin-agent/src/index.ts)
+
 <a id="deepseek-aidsh-workflow-worker-thread"></a>
 
 ## `@deepseek-ai/dsh-workflow-worker-thread`
@@ -3064,6 +3160,7 @@ export interface Config {
 - `@deepseek-ai/dsh-client-modules` — 需要 `webServer` · `loader`（[`packages/client/modules/src/index.ts`](../packages/client/modules/src/index.ts)）
 - `@deepseek-ai/dsh-client-runtime`（[`packages/client/runtime/src/index.ts`](../packages/client/runtime/src/index.ts)）
 - `@deepseek-ai/dsh-client-ui-agent-preset`（[`packages/client/ui-agent-preset/src/index.ts`](../packages/client/ui-agent-preset/src/index.ts)）
+- `@deepseek-ai/dsh-client-ui-agents`（[`packages/client/ui-agents/src/index.ts`](../packages/client/ui-agents/src/index.ts)）
 - `@deepseek-ai/dsh-client-ui-commands`（[`packages/client/ui-commands/src/index.ts`](../packages/client/ui-commands/src/index.ts)）
 - `@deepseek-ai/dsh-client-ui-conversation`（[`packages/client/ui-conversation/src/index.ts`](../packages/client/ui-conversation/src/index.ts)）
 - `@deepseek-ai/dsh-client-ui-cordis`（[`packages/extensions/ui-cordis/src/index.ts`](../packages/extensions/ui-cordis/src/index.ts)）
@@ -3083,6 +3180,7 @@ export interface Config {
 - `@deepseek-ai/dsh-client-ui-settings-models`（[`packages/client/ui-settings-models/src/index.ts`](../packages/client/ui-settings-models/src/index.ts)）
 - `@deepseek-ai/dsh-client-ui-settings-plugin-inventory`（[`packages/client/ui-settings-plugin-inventory/src/index.ts`](../packages/client/ui-settings-plugin-inventory/src/index.ts)）
 - `@deepseek-ai/dsh-client-ui-settings-plugins`（[`packages/client/ui-settings-plugins/src/index.ts`](../packages/client/ui-settings-plugins/src/index.ts)）
+- `@deepseek-ai/dsh-client-ui-settings-weixin`（[`packages/client/ui-settings-weixin/src/index.ts`](../packages/client/ui-settings-weixin/src/index.ts)）
 - `@deepseek-ai/dsh-client-ui-sidebar`（[`packages/client/ui-sidebar/src/index.ts`](../packages/client/ui-sidebar/src/index.ts)）
 - `@deepseek-ai/dsh-client-ui-skill`（[`packages/client/ui-skill/src/index.ts`](../packages/client/ui-skill/src/index.ts)）
 - `@deepseek-ai/dsh-client-ui-subagent`（[`packages/client/ui-subagent/src/index.ts`](../packages/client/ui-subagent/src/index.ts)）

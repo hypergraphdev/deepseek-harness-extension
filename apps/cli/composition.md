@@ -116,6 +116,10 @@ flowchart LR
   cfg --> plugin_dsh_base_subagent_spawn_in_process
   plugin_dsh_base_subagent_fork_in_process["subagent-fork-in-process<br/>@deepseek-ai/dsh-subagent-fork-in-process"]
   cfg --> plugin_dsh_base_subagent_fork_in_process
+  plugin_dsh_base_subagent_codex["subagent-codex<br/>@deepseek-ai/dsh-subagent-codex"]
+  cfg --> plugin_dsh_base_subagent_codex
+  plugin_dsh_base_subagent_claude_code["subagent-claude-code<br/>@deepseek-ai/dsh-subagent-claude-code"]
+  cfg --> plugin_dsh_base_subagent_claude_code
   plugin_dsh_base_tool_subagent_control["tool-subagent-control<br/>@deepseek-ai/dsh-tool-subagent-control"]
   cfg --> plugin_dsh_base_tool_subagent_control
   plugin_dsh_base_tool_subagent_list_agents["tool-subagent-list-agents<br/>@deepseek-ai/dsh-tool-subagent-control/list-agents"]
@@ -124,6 +128,10 @@ flowchart LR
   cfg --> plugin_dsh_base_tool_subagent
   plugin_dsh_base_tool_subagent_fork["tool-subagent-fork<br/>@deepseek-ai/dsh-tool-subagent"]
   cfg --> plugin_dsh_base_tool_subagent_fork
+  plugin_dsh_base_tool_subagent_codex["tool-subagent-codex<br/>@deepseek-ai/dsh-tool-subagent"]
+  cfg --> plugin_dsh_base_tool_subagent_codex
+  plugin_dsh_base_tool_subagent_claude_code["tool-subagent-claude-code<br/>@deepseek-ai/dsh-tool-subagent"]
+  cfg --> plugin_dsh_base_tool_subagent_claude_code
   plugin_dsh_base_tool_subagent_report["tool-subagent-report<br/>@deepseek-ai/dsh-tool-subagent-report"]
   cfg --> plugin_dsh_base_tool_subagent_report
   plugin_dsh_base_workflow_worker_thread["workflow-worker-thread<br/>@deepseek-ai/dsh-workflow-worker-thread"]
@@ -150,6 +158,16 @@ flowchart LR
   cfg --> plugin_dsh_base_tool_str_replace_editor
   plugin_dsh_base_repeat_tool_reminder["repeat-tool-reminder<br/>@deepseek-ai/dsh-repeat-tool-reminder"]
   cfg --> plugin_dsh_base_repeat_tool_reminder
+  plugin_dsh_base_hxa["hxa<br/>@deepseek-ai/dsh-hxa"]
+  cfg --> plugin_dsh_base_hxa
+  plugin_dsh_base_tool_hxa["tool-hxa<br/>@deepseek-ai/dsh-tool-hxa"]
+  cfg --> plugin_dsh_base_tool_hxa
+  plugin_dsh_base_hxa_inbound["hxa-inbound<br/>@deepseek-ai/dsh-hxa-inbound"]
+  cfg --> plugin_dsh_base_hxa_inbound
+  plugin_dsh_base_weixin["weixin<br/>@deepseek-ai/dsh-weixin"]
+  cfg --> plugin_dsh_base_weixin
+  plugin_dsh_base_weixin_agent["weixin-agent<br/>@deepseek-ai/dsh-weixin-agent"]
+  cfg --> plugin_dsh_base_weixin_agent
   plugin_dsh_base_web["web<br/>@deepseek-ai/dsh-web"]
   cfg --> plugin_dsh_base_web
   plugin_dsh_base_web_search_deepseek["web-search-deepseek<br/>@deepseek-ai/dsh-web-search-deepseek"]
@@ -224,10 +242,14 @@ flowchart LR
 | `subagent` | `@deepseek-ai/dsh-subagent` |
 | `subagent-spawn-in-process` | `@deepseek-ai/dsh-subagent-spawn-in-process` |
 | `subagent-fork-in-process` | `@deepseek-ai/dsh-subagent-fork-in-process` |
+| `subagent-codex` | `@deepseek-ai/dsh-subagent-codex` |
+| `subagent-claude-code` | `@deepseek-ai/dsh-subagent-claude-code` |
 | `tool-subagent-control` | `@deepseek-ai/dsh-tool-subagent-control` |
 | `tool-subagent-list-agents` | `@deepseek-ai/dsh-tool-subagent-control/list-agents` |
 | `tool-subagent` | `@deepseek-ai/dsh-tool-subagent` |
 | `tool-subagent-fork` | `@deepseek-ai/dsh-tool-subagent` |
+| `tool-subagent-codex` | `@deepseek-ai/dsh-tool-subagent` |
+| `tool-subagent-claude-code` | `@deepseek-ai/dsh-tool-subagent` |
 | `tool-subagent-report` | `@deepseek-ai/dsh-tool-subagent-report` |
 | `workflow-worker-thread` | `@deepseek-ai/dsh-workflow-worker-thread` |
 | `tool-workflow` | `@deepseek-ai/dsh-tool-workflow` |
@@ -241,6 +263,11 @@ flowchart LR
 | `tool-ralph` | `@deepseek-ai/dsh-tool-ralph` |
 | `tool-str-replace-editor` | `@deepseek-ai/dsh-tool-str-replace-editor` |
 | `repeat-tool-reminder` | `@deepseek-ai/dsh-repeat-tool-reminder` |
+| `hxa` | `@deepseek-ai/dsh-hxa` |
+| `tool-hxa` | `@deepseek-ai/dsh-tool-hxa` |
+| `hxa-inbound` | `@deepseek-ai/dsh-hxa-inbound` |
+| `weixin` | `@deepseek-ai/dsh-weixin` |
+| `weixin-agent` | `@deepseek-ai/dsh-weixin-agent` |
 | `web` | `@deepseek-ai/dsh-web` |
 | `web-search-deepseek` | `@deepseek-ai/dsh-web-search-deepseek` |
 | `tool-web` | `@deepseek-ai/dsh-tool-web` |

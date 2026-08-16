@@ -58,6 +58,8 @@ import * as ToolSkill from '@deepseek-ai/dsh-tool-skill'
 import * as ToolSessionQuery from '@deepseek-ai/dsh-tool-session-query'
 import * as ToolTasks from '@deepseek-ai/dsh-tool-jobs'
 import * as ToolTodo from '@deepseek-ai/dsh-tool-todo'
+import HxaRuntime from '@deepseek-ai/dsh-hxa'
+import * as ToolHxa from '@deepseek-ai/dsh-tool-hxa'
 import * as ToolSubagent from '@deepseek-ai/dsh-tool-subagent'
 import * as ToolWeb from '@deepseek-ai/dsh-tool-web'
 import VmWorkflowEngine from '@deepseek-ai/dsh-workflow-worker-thread'
@@ -505,6 +507,22 @@ const TOOL_PACKAGES: ToolPackage[] = [
     },
     note:
       'The kind-agnostic background-job controller: background bash commands, PTY sends, and subagents are read, listed, and killed through the same three tools. Loading the plugin attaches the controller that arms producers\' `ctx.jobs.start()`.',
+  },
+  {
+    pkg: '@deepseek-ai/dsh-tool-hxa',
+    dir: 'tool-hxa',
+    source: 'packages/hxa/tool-hxa/src/index.ts',
+    requires: ['ctx.hxa with a live endpoint', 'ctx.tools', 'ctx.systemPrompt'],
+    writes: ['tool/call', 'tool/result'],
+    async mount(ctx) {
+      // The tools register only while a live endpoint exists; a scratch route
+      // and token satisfy that gate without reaching any hub.
+      process.env['HXA_BOT_TOKEN'] = 'catalog-scratch-token'
+      await ctx.plugin(HxaRuntime, { url: 'https://hxa.invalid/connect' })
+      await ctx.plugin(ToolHxa, {})
+    },
+    note:
+      'The team tools register together while the hub endpoint is configured and the bot token variable is set; a dormant hub advertises nothing. hxa_inbox expansion is bounded by the plugin config.',
   },
   {
     pkg: '@deepseek-ai/dsh-tool-todo',

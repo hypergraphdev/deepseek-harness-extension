@@ -1,5 +1,7 @@
 # @deepseek-ai/dsh-weixin-agent
 
+English | [中文](README.zh.md)
+
 Consumer of `ctx.weixin` and `ctx.agents`: WeChat as a conversation with the harness agent. An inbound message wakes a dedicated agent, and the assistant text that closes that turn is sent straight back to whoever wrote in.
 
 The reply travels through this bridge rather than a tool, because the conversation has exactly one destination — the sender. The model therefore needs no WeChat vocabulary. Dormant while no account is linked, and the agent handle's failure never costs the WeChat connection.
@@ -14,7 +16,42 @@ The reply travels through this bridge rather than a tool, because the conversati
 
 ## Model Experience
 
-The agent carries a scoped `weixin:persona` prompt section (order 0) telling the model it is answering in a chat app: write plain text, no Markdown, because WeChat renders none of it and headings, bullets, and fences arrive as literal characters. Each inbound message enters the agent's session as a plugin-sourced `notice` user message, so it is durable and model-visible, satisfying the model-visible ⟺ logged rule. The assistant text closing each turn is the reply the bridge sends back to the sender; the model issues no send call of its own.
+### Chat persona
+
+#### What the model sees
+
+The WeChat agent carries the scoped `weixin:persona` section (order 0):
+
+##### Section text
+
+```markdown
+You are answering in the user's WeChat. Every message you receive was sent by a person in a chat app, and your reply is delivered straight back to that chat.
+Write like a chat message: short, plain, no Markdown — WeChat renders none of it, so headings, bullets, and code fences arrive as literal characters.
+You have this workstation's tools. Use them when the request needs real work, then report the outcome in a sentence or two rather than pasting raw output.
+You speak in the user's name; route irreversible or outward-facing decisions back to them instead of acting alone.
+```
+
+#### Token effect
+
+Fixed section cost on every request of the WeChat agent; other agents are untouched.
+
+#### KV Cache effect
+
+Prefix-stable for the WeChat session while the plugin stays mounted.
+
+### Inbound notices and the reply path
+
+#### What the model sees
+
+Each inbound WeChat message enters the session as one plugin-sourced `notice` user message, durable in the log (model-visible ⟺ logged). The assistant text closing the turn is the reply the bridge sends back; the model issues no send call of its own.
+
+#### Token effect
+
+One small message per inbound text, retained as history until compaction; the reply adds nothing beyond the turn's own assistant text.
+
+#### KV Cache effect
+
+Append-only; newly visible content follows the reusable request prefix and does not invalidate existing KV-cache entries.
 
 ## Known Limitations and Deferred Work
 

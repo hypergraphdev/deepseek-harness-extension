@@ -36,6 +36,7 @@ This table connects model-visible tool names to the plugin package and service s
 | `@deepseek-ai/dsh-tool-subagent-control` | `interrupt_agent`, `list_agents`, `send_message` | `ctx.tools`, `ctx.subagents`, `ctx.agents and ctx.sessionProjections (list_agents only)` | `tool/call`, `tool/result`, `child session events through ctx.subagents` | - | The globally named control tools over continuable background subagents: provider-bound `tool-subagent` instances register distinct delegation tools, while this package registers `send_message` and `interrupt_agent` once, plus `list_agents` from its separately loaded `/list-agents` plugin (whose catalog rows use the sessionProjections and live Agent registries). |
 | `@deepseek-ai/dsh-tool-subagent-report` | `report` | `ctx.subagents`, `ctx.systemPrompt`, `a live continuable in-process child Agent` | `tool/call`, `tool/result`, `a user-role message in the direct parent session` | - | Registered per continuable in-process child rather than globally, so this schema is visible only inside such a child and survives its global `toolFilter`. The same contribution installs the child-scoped `tool:report` prompt section, which this catalog does not render. The parent-facing `send_message` tool is installed independently. |
 | `@deepseek-ai/dsh-tool-jobs` | `job_kill`, `job_list`, `job_output` | `ctx.tools`, `ctx.jobs`, `ctx.systemPrompt` | `tool/call`, `tool/result`, `user/message via agent.inject() for background completion notices` | - | The kind-agnostic background-job controller: background bash commands, PTY sends, and subagents are read, listed, and killed through the same three tools. Loading the plugin attaches the controller that arms producers' `ctx.jobs.start()`. |
+| `@deepseek-ai/dsh-tool-hxa` | `hxa_contacts`, `hxa_inbox`, `hxa_send` | `ctx.hxa with a live endpoint`, `ctx.tools`, `ctx.systemPrompt` | `tool/call`, `tool/result` | - | The team tools register together while the hub endpoint is configured and the bot token variable is set; a dormant hub advertises nothing. hxa_inbox expansion is bounded by the plugin config. |
 | `@deepseek-ai/dsh-tool-todo` | `todo_write` | `ctx.tools`, `owning Agent session` | `tool/call`, `todo/write`, `tool/result` | - | todo_write is session-owned state; UIs render the latest todo/write event as a checklist. `allowParallelInProgress` is required with no default, so the catalog states its choice: `true`, whose description invites several `in_progress` items. A deployment choosing `false` receives the same tool with a description asking for exactly one active task. |
 | `@deepseek-ai/dsh-tool-workflow` | `workflow` | `ctx.tools`, `ctx.workflowEngine`, `ctx.systemPrompt`, `a calling Agent (exec.agent parents the script children)` | `tool/call`, `tool/result` | - | - |
 | `@deepseek-ai/dsh-tool-web` | `web_fetch`, `web_search` | `ctx.tools`, `ctx.web`, `ctx.systemPrompt` | `tool/call`, `tool/result` | - | web_search and web_fetch keep provider selection behind ctx.web so model-visible schemas stay stable across backend swaps. |
@@ -666,7 +667,7 @@ Source: [`packages/fs/tool-fs/src/index.ts`](../packages/fs/tool-fs/src/index.ts
 
 ### `read_image`
 
-Read a PNG/JPEG/WebP/GIF file and return the image itself. Requires the current model to accept image input.
+Read a PNG/JPEG/WebP/GIF file and return the image itself. Requires the current model to accept image input, or a configured vision bridge that transcribes images for it.
 
 ```json
 {
@@ -1678,6 +1679,74 @@ Read a background job. Stream jobs return only output since the previous read; f
 Source: [`packages/jobs/tool-jobs/src/index.ts`](../packages/jobs/tool-jobs/src/index.ts)
 
 The kind-agnostic background-job controller: background bash commands, PTY sends, and subagents are read, listed, and killed through the same three tools. Loading the plugin attaches the controller that arms producers' `ctx.jobs.start()`.
+
+<a id="deepseek-aidsh-tool-hxa"></a>
+
+## `@deepseek-ai/dsh-tool-hxa`
+
+### `hxa_contacts`
+
+List the teammates (bots) in your HXA org: name, role, bio, and online state. Optional fuzzy query over role/bio.
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "query": {
+      "type": "string",
+      "description": "Fuzzy filter over bio/role/function; omit to list everyone."
+    }
+  }
+}
+```
+
+Source: [`packages/hxa/tool-hxa/src/index.ts`](../packages/hxa/tool-hxa/src/index.ts)
+
+### `hxa_inbox`
+
+Collect HXA events since the last check: unread DM messages (expanded per channel) and thread invitations/status changes.
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "since_hours": {
+      "type": "number",
+      "description": "Look-back window in hours; omit to resume from the previous check."
+    }
+  }
+}
+```
+
+Source: [`packages/hxa/tool-hxa/src/index.ts`](../packages/hxa/tool-hxa/src/index.ts)
+
+### `hxa_send`
+
+Send a direct message to one HXA teammate by bot name. Replies arrive asynchronously; collect them later with hxa_inbox.
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "to": {
+      "type": "string",
+      "description": "Target bot name (see hxa_contacts)."
+    },
+    "content": {
+      "type": "string",
+      "description": "The message body."
+    }
+  },
+  "required": [
+    "to",
+    "content"
+  ]
+}
+```
+
+Source: [`packages/hxa/tool-hxa/src/index.ts`](../packages/hxa/tool-hxa/src/index.ts)
+
+The team tools register together while the hub endpoint is configured and the bot token variable is set; a dormant hub advertises nothing. hxa_inbox expansion is bounded by the plugin config.
 
 <a id="deepseek-aidsh-tool-todo"></a>
 

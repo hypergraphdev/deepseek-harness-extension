@@ -107,6 +107,14 @@ flowchart LR
   pkg_agent_default_model["agent-default-model"]
   svc_agentDefaultModel["ctx.agentDefaultModel<br/>Default Agent model selection"]
   pkg_headless["headless"]
+  pkg_hxa["hxa"]
+  svc_hxa["ctx.hxa<br/>HXA Connect hub membership"]
+  pkg_tool_hxa["tool-hxa"]
+  pkg_hxa_inbound["hxa-inbound"]
+  pkg_weixin["weixin"]
+  svc_weixin["ctx.weixin<br/>QR-linked WeChat account"]
+  pkg_weixin_agent["weixin-agent"]
+  pkg_web_app["web-app"]
   pkg_vision_bridge["vision-bridge"]
   svc_visionBridge["ctx.visionBridge<br/>Image transcription for text-only model routes"]
   svc_agentLoop["ctx.agentLoop<br/>Concrete loop driver"]
@@ -228,6 +236,7 @@ flowchart LR
   pkg_fs_local --> svc_fs
   pkg_fs_sandbox --> svc_fs
   pkg_goal --> svc_goals
+  pkg_hxa --> svc_hxa
   pkg_invariants --> svc_invariants
   pkg_jobs --> svc_jobs
   pkg_jobs_local --> svc_jobs
@@ -296,6 +305,7 @@ flowchart LR
   pkg_web_search_exa --> svc_web
   pkg_web_search_perplexity --> svc_web
   pkg_webserver --> svc_webServer
+  pkg_weixin --> svc_weixin
   pkg_workflow --> svc_workflowEngine
   pkg_workflow_worker_thread --> svc_workflowEngine
   pkg_workspace --> svc_workspaceRegistry
@@ -322,6 +332,8 @@ flowchart LR
   svc_e2b --> pkg_fs_e2b
   svc_e2b --> pkg_subprocess_e2b
   svc_fs --> pkg_tool_fs
+  svc_hxa --> pkg_hxa_inbound
+  svc_hxa --> pkg_tool_hxa
   svc_invariants --> pkg_agent
   svc_invariants --> pkg_agent_loop
   svc_invariants --> pkg_scope
@@ -409,6 +421,8 @@ flowchart LR
   svc_webServer --> pkg_connection
   svc_webServer --> pkg_hmr
   svc_webServer --> pkg_modules
+  svc_weixin --> pkg_web_app
+  svc_weixin --> pkg_weixin_agent
   svc_workflowEngine --> pkg_tool_ralph
   svc_workflowEngine --> pkg_tool_workflow
   svc_workspaceRegistry --> pkg_apiproxy
@@ -447,6 +461,8 @@ flowchart LR
 | `ctx.skills` | `seam` | [`skill`](../packages/skill/skill) | [`skill-badge`](../packages/skill/skill-badge), [`skill-filesystem`](../packages/skill/skill-filesystem) | [`tool-skill`](../packages/skill/tool-skill) | - | 合并提供方的 skill（技能）目录；tool-skill 渲染会话前缀目录，并加载完整的 skill 正文。 |
 | `ctx.agents` | `core` | [`agent`](../packages/core/agent) | - | [`agent-loop`](../packages/core/agent-loop), [`acp`](../packages/acp/acp), `subagent-inprocess` | - | 拥有实时 Agent 句柄、创建／恢复工厂 seam，以及进程本地的发起方传播。 |
 | `ctx.agentDefaultModel` | `core` | [`agent-default-model`](../packages/core/agent-default-model) | - | [`headless`](../packages/bundle/headless), [`host-apiproxy`](../packages/host/apiproxy) | - | 通过 settings 分层默认 `ModelSelection`，让直接入口与 Host 支撑的 Agent 入口共享同一个状态所有者。 |
+| `ctx.hxa` | `seam` | [`hxa`](../packages/hxa/hxa) | - | [`tool-hxa`](../packages/hxa/tool-hxa), [`hxa-inbound`](../packages/hxa/hxa-inbound) | - | 一个 hub 上的一个 bot 身份：端点/凭据解析与带鉴权的请求通路，供团队工具与入站桥消费。 |
+| `ctx.weixin` | `seam` | [`weixin`](../packages/weixin/weixin) | - | [`weixin-agent`](../packages/weixin/weixin-agent), [`web-app`](../packages/bundle/web-app) | - | 绑定、持久凭据、派发 weixin/message 的接收循环与出站文本；weixin-agent 承担对话桥接。 |
 | `ctx.visionBridge` | `core` | [`vision-bridge`](../packages/llm/vision-bridge) | - | [`host-apiproxy`](../packages/host/apiproxy) | - | 通过配置的多模态路由转述已记录图片来修复 UNSUPPORTED_CONTENT 步骤；宿主据此在纯文本路由上放行图片。 |
 | `ctx.agentLoop` | `bundle` | [`agent-loop`](../packages/core/agent-loop) | - | [`agent-spine-demo`](../packages/examples/agent-spine-demo) | - | 唯一的具体循环插件；扩展包依赖 dsh-agent 的事件和服务，而不依赖此包。 |
 | `ctx.goals` | `core` | [`goal`](../packages/goal/goal) | - | - | - | 从会话日志折叠带修订版本的目标状态，并将实时延续激活保留在进程本地。 |

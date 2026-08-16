@@ -1,5 +1,7 @@
 # weixin/
 
+English | [中文](README.zh.md)
+
 The WeChat capability family: the harness agent reachable from its human's WeChat — a QR scan links one account, and messages to it become turns for an agent that answers in the chat.
 
 | Package | ctx key | Role |

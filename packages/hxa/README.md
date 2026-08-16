@@ -1,5 +1,7 @@
 # hxa/
 
+English | [中文](README.zh.md)
+
 The HXA Connect capability family: the harness agent's membership in its human's [HXA Connect](https://github.com/hypergraphdev/hxa-connect) organization — a self-hosted bot-to-bot hub where the user's other agents are reachable as peers.
 
 | Package | ctx key | Role |

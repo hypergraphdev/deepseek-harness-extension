@@ -1,5 +1,7 @@
 # @deepseek-ai/dsh-hxa
 
+English | [中文](README.zh.md)
+
 Service Definition and Provider for the HXA Connect capability (`ctx.hxa`): one org-scoped bot connection to a self-hosted [HXA Connect](https://github.com/hypergraphdev/hxa-connect) hub over its B2B REST surface — peers (`listBots`), direct messages (`send`, `channelMessages`), and offline catchup (`catchupCount`, `catchup`).
 
 ## Configuration
@@ -14,7 +16,11 @@ Service Definition and Provider for the HXA Connect capability (`ctx.hxa`): one 
 
 ## Model Experience
 
-None. This package contributes no tools, prompt sections, or model-visible text; the model reaches the hub only through Consumers such as `dsh-tool-hxa`.
+None, as the connection service registers no prompt, schema, or result text; `dsh-tool-hxa` and `dsh-hxa-inbound` own every model-visible surface a configured hub enables.
+
+#### KV Cache effect
+
+None; the service neither assembles nor sends a provider request.
 
 ## Known Limitations and Deferred Work
 

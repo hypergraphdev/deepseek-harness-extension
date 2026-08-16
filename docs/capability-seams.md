@@ -105,6 +105,14 @@ flowchart LR
   pkg_agent_default_model["agent-default-model"]
   svc_agentDefaultModel["ctx.agentDefaultModel<br/>Default Agent model selection"]
   pkg_headless["headless"]
+  pkg_hxa["hxa"]
+  svc_hxa["ctx.hxa<br/>HXA Connect hub membership"]
+  pkg_tool_hxa["tool-hxa"]
+  pkg_hxa_inbound["hxa-inbound"]
+  pkg_weixin["weixin"]
+  svc_weixin["ctx.weixin<br/>QR-linked WeChat account"]
+  pkg_weixin_agent["weixin-agent"]
+  pkg_web_app["web-app"]
   pkg_vision_bridge["vision-bridge"]
   svc_visionBridge["ctx.visionBridge<br/>Image transcription for text-only model routes"]
   svc_agentLoop["ctx.agentLoop<br/>Concrete loop driver"]
@@ -226,6 +234,7 @@ flowchart LR
   pkg_fs_local --> svc_fs
   pkg_fs_sandbox --> svc_fs
   pkg_goal --> svc_goals
+  pkg_hxa --> svc_hxa
   pkg_invariants --> svc_invariants
   pkg_jobs --> svc_jobs
   pkg_jobs_local --> svc_jobs
@@ -294,6 +303,7 @@ flowchart LR
   pkg_web_search_exa --> svc_web
   pkg_web_search_perplexity --> svc_web
   pkg_webserver --> svc_webServer
+  pkg_weixin --> svc_weixin
   pkg_workflow --> svc_workflowEngine
   pkg_workflow_worker_thread --> svc_workflowEngine
   pkg_workspace --> svc_workspaceRegistry
@@ -320,6 +330,8 @@ flowchart LR
   svc_e2b --> pkg_fs_e2b
   svc_e2b --> pkg_subprocess_e2b
   svc_fs --> pkg_tool_fs
+  svc_hxa --> pkg_hxa_inbound
+  svc_hxa --> pkg_tool_hxa
   svc_invariants --> pkg_agent
   svc_invariants --> pkg_agent_loop
   svc_invariants --> pkg_scope
@@ -407,6 +419,8 @@ flowchart LR
   svc_webServer --> pkg_connection
   svc_webServer --> pkg_hmr
   svc_webServer --> pkg_modules
+  svc_weixin --> pkg_web_app
+  svc_weixin --> pkg_weixin_agent
   svc_workflowEngine --> pkg_tool_ralph
   svc_workflowEngine --> pkg_tool_workflow
   svc_workspaceRegistry --> pkg_apiproxy
@@ -445,6 +459,8 @@ flowchart LR
 | `ctx.skills` | `seam` | [`skill`](../packages/skill/skill) | [`skill-badge`](../packages/skill/skill-badge), [`skill-filesystem`](../packages/skill/skill-filesystem) | [`tool-skill`](../packages/skill/tool-skill) | - | Merges provider skill catalogs; tool-skill renders the session-prefix catalog and loads complete skill bodies. |
 | `ctx.agents` | `core` | [`agent`](../packages/core/agent) | - | [`agent-loop`](../packages/core/agent-loop), [`acp`](../packages/acp/acp), `subagent-inprocess` | - | Owns live Agent handles, the create/resume factory seam, and process-local initiator propagation. |
 | `ctx.agentDefaultModel` | `core` | [`agent-default-model`](../packages/core/agent-default-model) | - | [`headless`](../packages/bundle/headless), [`host-apiproxy`](../packages/host/apiproxy) | - | Layers the default ModelSelection through settings so direct and Host-backed Agent entry points share one state owner. |
+| `ctx.hxa` | `seam` | [`hxa`](../packages/hxa/hxa) | - | [`tool-hxa`](../packages/hxa/tool-hxa), [`hxa-inbound`](../packages/hxa/hxa-inbound) | - | One bot identity on one hub: endpoint/credential resolution and the authenticated request path the team tools and inbound bridge consume. |
+| `ctx.weixin` | `seam` | [`weixin`](../packages/weixin/weixin) | - | [`weixin-agent`](../packages/weixin/weixin-agent), [`web-app`](../packages/bundle/web-app) | - | Linking, the durable credential, the receive loop dispatching weixin/message, and outbound text; weixin-agent bridges the conversation. |
 | `ctx.visionBridge` | `core` | [`vision-bridge`](../packages/llm/vision-bridge) | - | [`host-apiproxy`](../packages/host/apiproxy) | - | Repairs UNSUPPORTED_CONTENT steps by transcribing logged images through a configured multimodal route; the host consults it to admit images on text-only routes. |
 | `ctx.agentLoop` | `bundle` | [`agent-loop`](../packages/core/agent-loop) | - | [`agent-spine-demo`](../packages/examples/agent-spine-demo) | - | The one concrete loop plugin; extension packages depend on dsh-agent events and services, not on this package. |
 | `ctx.goals` | `core` | [`goal`](../packages/goal/goal) | - | - | - | Folds revisioned objective state from the session log and keeps live continuation activation process-local. |

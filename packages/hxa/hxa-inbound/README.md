@@ -1,5 +1,7 @@
 # @deepseek-ai/dsh-hxa-inbound
 
+English | [中文](README.zh.md)
+
 Consumer of `ctx.hxa` and `ctx.agents`: the inbound bridge that makes the harness bot a live, addressable teammate. It holds one hub WebSocket so the bot shows **online** (presence), and wakes a dedicated coordinator agent on each inbound direct message; the coordinator answers through its own `hxa_send`.
 
 Presence and the coordinator are independent lifecycles — a coordinator failure never costs presence, and the socket reconnects with capped backoff. Dormant while `ctx.hxa` has no endpoint.
@@ -14,7 +16,44 @@ Presence and the coordinator are independent lifecycles — a coordinator failur
 
 ## Model Experience
 
-The coordinator agent carries a scoped `hxa:coordinator` persona (order 0) framing it as the user's standing team seat, not a general assistant: reply to teammates only through `hxa_send`, stay on-topic, route irreversible or user-facing decisions back to the user. Each inbound message enters the coordinator's session as a plugin-sourced `notice` user message (`agent/inbox/spliced` → `user/message`), so it is durable and model-visible, satisfying the model-visible ⟺ logged rule. The coordinator's own tool calls (its reply) log as ordinary `tool/call` / `tool/result`.
+### Coordinator persona
+
+#### What the model sees
+
+The dedicated coordinator agent carries the scoped `hxa:coordinator` section (order 0):
+
+##### Section text
+
+```markdown
+You are dsh-main, the user's standing seat on their HXA team. You are a coordinator, not a general assistant.
+Teammate messages arrive as notices describing who sent what. For each one, decide whether it needs a reply to the teammate, an action, or the user's attention.
+- To reply to a teammate, call hxa_send with their exact bot name. Keep replies brief and strictly on-topic: answer what was asked. Do NOT start unrelated conversations or ask the teammate your own questions unless the user's interest genuinely requires it.
+- If a message needs the user rather than you, leave it for them instead of inventing a reply.
+- If no response is warranted, do nothing.
+You act in the user's name; route irreversible or outward-facing decisions back to the user.
+```
+
+#### Token effect
+
+Fixed section cost on every coordinator request; other agents are untouched.
+
+#### KV Cache effect
+
+Prefix-stable for the coordinator session while the plugin stays mounted.
+
+### Inbound notice messages
+
+#### What the model sees
+
+Each inbound direct message wakes the coordinator with one plugin-sourced `notice` user message naming the sender and text, durable in the session log (model-visible ⟺ logged).
+
+#### Token effect
+
+One small message per inbound event, retained as history until compaction.
+
+#### KV Cache effect
+
+Append-only; newly visible content follows the reusable request prefix and does not invalidate existing KV-cache entries.
 
 ## Known Limitations and Deferred Work
 

@@ -1,5 +1,7 @@
 # @deepseek-ai/dsh-weixin
 
+English | [中文](README.zh.md)
+
 Service Definition and Provider for the WeChat capability (`ctx.weixin`): one QR-linked WeChat account over the iLink Bot wire protocol — linking (`startLink`, `status`, `unlink`), inbound delivery (`weixin/message`), and outbound text (`send`).
 
 ## Configuration
@@ -13,7 +15,11 @@ Linking is a one-time act: the scan yields a bot token stored 0600 under the har
 
 ## Model Experience
 
-None. This package contributes no tools, prompt sections, or model-visible text; the model reaches WeChat only through Consumers such as `dsh-weixin-agent`.
+None, as the connection service registers no prompt, schema, or result text; `dsh-weixin-agent` owns the model-visible conversation a linked account enables.
+
+#### KV Cache effect
+
+None; the service neither assembles nor sends a provider request.
 
 ## Known Limitations and Deferred Work
 
