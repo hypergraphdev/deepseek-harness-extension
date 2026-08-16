@@ -22,8 +22,7 @@ export const BROWSER_PAGE_CONTEXT_SOURCE = 'web-surface-browser-page'
 function newestEnteringPage(messages: readonly UserMessage[]): PromptBrowserPage | null | undefined {
   for (let index = messages.length - 1; index >= 0; index -= 1) {
     const source = messages[index]?.source
-    if (source !== undefined && source.kind === 'user' && 'browserPage' in source
-      && source.browserPage !== undefined) {
+    if (source !== undefined && source.kind === 'user' && 'browserPage' in source) {
       return source.browserPage
     }
   }

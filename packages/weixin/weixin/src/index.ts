@@ -54,12 +54,6 @@ export interface Config {
   backoffDelayMs?: number
 }
 
-/** Schemastery validation for {@link Config}. */
-export const Config: z<Config> = z.object({
-  retryDelayMs: z.number().default(2_000),
-  backoffDelayMs: z.number().default(30_000),
-})
-
 /** The durable link: what a scan yields and a restart reuses. */
 interface StoredLink {
   botToken: string
@@ -94,6 +88,14 @@ export class WeixinError extends Error {
  * receiving, and sending all run through this service.
  */
 export class WeixinRuntime extends Service {
+  // On the class, not a module const: the Loader validates a Service plugin's
+  // config through `static Config`, and without it a row with no `config:` key
+  // hands the constructor `undefined` instead of the schema defaults.
+  static Config: z<Config> = z.object({
+    retryDelayMs: z.number().default(2_000),
+    backoffDelayMs: z.number().default(30_000),
+  })
+
   /** Credential file, 0600 under the harness home. */
   private readonly linkPath = dshHomePath('weixin', 'link.json')
   private link: StoredLink | undefined
@@ -178,6 +180,7 @@ export class WeixinRuntime extends Service {
     let refreshes = 0
     while (this.pending !== undefined && !this.pending.abort.signal.aborted) {
       const report = await pollQr(this.pending.challenge.qrcode, host)
+      // oxlint-disable-next-line typescript/no-unnecessary-condition -- unlink() can clear this while awaited
       if (this.pending === undefined) return
       switch (report.status) {
         case 'scaned':
@@ -266,6 +269,7 @@ export class WeixinRuntime extends Service {
       while (!abort.signal.aborted && this.link !== undefined) {
         try {
           const batch = await getUpdates(this.link.baseUrl, this.link.botToken, this.link.cursor ?? '', timeoutMs)
+          // oxlint-disable-next-line typescript/no-unnecessary-condition -- abort/unlink can land while awaited
           if (abort.signal.aborted || this.link === undefined) return
           if (batch.errorCode === SESSION_EXPIRED_CODE) {
             // The credential no longer works; a human must scan again.
@@ -287,6 +291,7 @@ export class WeixinRuntime extends Service {
           this.saveLink()
           for (const message of batch.messages) this.ctx.emit('weixin/message', message)
         } catch (error: unknown) {
+          // oxlint-disable-next-line typescript/no-unnecessary-condition -- disposal can abort while the poll is awaited
           if (abort.signal.aborted) return
           failures += 1
           this.ctx.logger.warn(`weixin: receive failed: ${String(error)}`)

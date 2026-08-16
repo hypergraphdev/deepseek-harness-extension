@@ -19,6 +19,8 @@ import type { Agent } from '@deepseek-ai/dsh-agent'
 import type {} from '@deepseek-ai/dsh-weixin'
 import type {} from '@deepseek-ai/dsh-system-prompt'
 import type {} from '@deepseek-ai/dsh-agent-default-model'
+// Type-only: resolves `ctx.get('sessionPersistence')` for the resume-or-create probe.
+import type {} from '@deepseek-ai/dsh-session-persistence'
 
 /** Cordis plugin name used by loader diagnostics. */
 export const name = 'weixin-agent'
@@ -95,10 +97,11 @@ export function apply(ctx: Context, config: Config): void {
         const handle = persisted === undefined
           ? await agentCtx.agents.create({ sessionId, meta: { cwd: process.cwd() }, ...shared })
           : await agentCtx.agents.resume({ resumeSessionId: sessionId, ...shared })
+        // oxlint-disable-next-line typescript/no-unnecessary-condition -- disposal can land while the agent is created
         if (cancelled) { await handle.dispose(); return }
         agent = handle.agent
         session = handle.agent.session
-        dispose = handle.dispose
+        dispose = () => handle.dispose()
       } catch (error: unknown) {
         ctx.logger.warn(`weixin-agent: agent unavailable: ${String(error)}`)
       }

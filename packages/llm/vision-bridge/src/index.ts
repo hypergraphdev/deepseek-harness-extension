@@ -288,8 +288,9 @@ export class VisionBridge extends Service {
         // The images sit inside the tool-result block, the only part a
         // tool/result replacement may change.
         const message = event.data.message
+        // `ToolResultMessage.content` is the one-tuple `[ToolResultBlock]`.
         const [result] = message.content
-        if (result?.type !== 'tool-result' || !contentHasImage(result.content)) continue
+        if (!contentHasImage(result.content)) continue
         const { content, captionSeqs } = await this.transcribeBlockList(result.content, session, route, signal)
         if (contentHasImage(content)) continue
         session.append('tool/result', {

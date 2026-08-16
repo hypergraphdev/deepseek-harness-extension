@@ -18,6 +18,8 @@ import type { UserMessage } from '@deepseek-ai/dsh-llm'
 import { boundContextSummary } from '@deepseek-ai/dsh-llm'
 import type {} from '@deepseek-ai/dsh-hxa'
 import type {} from '@deepseek-ai/dsh-agent'
+// Type-only: resolves `ctx.get('sessionPersistence')` for the resume-or-create probe.
+import type {} from '@deepseek-ai/dsh-session-persistence'
 import type {} from '@deepseek-ai/dsh-system-prompt'
 import type {} from '@deepseek-ai/dsh-agent-default-model'
 
@@ -171,6 +173,7 @@ export function apply(ctx: Context, config: Config): void {
       scheduleReconnect()
       return
     }
+    // oxlint-disable-next-line typescript/no-unnecessary-condition -- disposal can land while the ticket is awaited
     if (disposed) return
     const ws = new Socket(ctx.hxa.wsUrl(ticket))
     socket = ws
@@ -229,9 +232,10 @@ export function apply(ctx: Context, config: Config): void {
         const handle = persisted === undefined
           ? await agentCtx.agents.create({ sessionId, meta: { cwd: process.cwd() }, ...shared })
           : await agentCtx.agents.resume({ resumeSessionId: sessionId, ...shared })
+        // oxlint-disable-next-line typescript/no-unnecessary-condition -- disposal can land while the agent is created
         if (cancelled) { await handle.dispose(); return }
         agent = handle.agent
-        handleDispose = handle.dispose
+        handleDispose = () => handle.dispose()
       } catch (error: unknown) {
         ctx.logger.warn(`hxa-inbound: coordinator agent unavailable: ${String(error)}`)
       }

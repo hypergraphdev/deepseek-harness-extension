@@ -29,7 +29,7 @@ export function installWeixinLink(ctx: Context): void {
   ctx.inject(['webServer'], (webCtx) => {
     /** Answer one request against the live service, or 404 when absent. */
     const handle = (
-      run: (weixin: NonNullable<ReturnType<Context['get']>> & Context['weixin']) => Promise<unknown> | unknown,
+      run: (weixin: Context['weixin']) => unknown,
     ) => async (req: IncomingMessage, res: ServerResponse) => {
       if (req.headers['sec-fetch-site'] === 'cross-site') {
         json(res, 403, { error: 'cross-site request refused' })

@@ -776,7 +776,7 @@ export function InputBar({
                   aria-pressed={dictation.listening}
                   disabled={locked || machineBusy}
                   onMouseDown={keepFocus}
-                  onClick={dictation.toggle}
+                  onClick={() => { dictation.toggle() }}
                 >
                   <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden>
                     <path d="M8 1a2.5 2.5 0 0 1 2.5 2.5v4a2.5 2.5 0 0 1-5 0v-4A2.5 2.5 0 0 1 8 1Z" fill="currentColor" />

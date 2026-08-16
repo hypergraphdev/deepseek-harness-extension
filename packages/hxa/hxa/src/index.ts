@@ -37,13 +37,6 @@ export interface Config {
   requestTimeoutMs?: number
 }
 
-/** Schemastery validation for {@link Config}. */
-export const Config: z<Config> = z.object({
-  url: z.string(),
-  tokenEnv: z.string().default('HXA_BOT_TOKEN'),
-  requestTimeoutMs: z.number().default(15_000),
-})
-
 /** A resolved live connection target. */
 export interface HxaEndpoint {
   /** Hub base URL without a trailing slash. */
@@ -84,8 +77,9 @@ function arr(value: unknown, what: string): unknown[] {
 /** Project one wire message record. */
 function readMessage(value: unknown): HxaMessage {
   const record = obj(value, 'message')
+  const rawId = record['id']
   return {
-    id: String(record['id'] ?? ''),
+    id: typeof rawId === 'string' ? rawId : typeof rawId === 'number' ? String(rawId) : '',
     senderName: str(record, 'sender_name', 'optional'),
     content: str(record, 'content', 'optional'),
     createdAt: typeof record['created_at'] === 'number' ? record['created_at'] : 0,
@@ -97,6 +91,15 @@ function readMessage(value: unknown): HxaMessage {
  * on one hub; agents and UI reach the org through its methods only.
  */
 export class HxaRuntime extends Service {
+  // On the class, not a module const: the Loader validates a Service plugin's
+  // config through `static Config`, and without it a row with no `config:` key
+  // hands the constructor `undefined` instead of the schema defaults.
+  static Config: z<Config> = z.object({
+    url: z.string(),
+    tokenEnv: z.string().default('HXA_BOT_TOKEN'),
+    requestTimeoutMs: z.number().default(15_000),
+  })
+
   constructor(ctx: Context, private config: Config) {
     super(ctx, 'hxa')
   }
