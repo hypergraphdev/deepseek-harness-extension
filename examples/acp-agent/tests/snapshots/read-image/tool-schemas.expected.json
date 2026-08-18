@@ -246,7 +246,7 @@
     },
     {
       "name": "read_image",
-      "description": "Read a PNG/JPEG/WebP/GIF file and return the image itself. Requires the current model to accept image input.",
+      "description": "Read a PNG/JPEG/WebP/GIF file and return the image itself. Requires the current model to accept image input, or a configured vision bridge that transcribes images for it.",
       "parameters": {
         "type": "object",
         "properties": {

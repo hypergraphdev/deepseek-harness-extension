@@ -125,7 +125,7 @@ interface ToolArgsMap {
     /** Maximum number of lines to return. Defaults to 2000. */
     limit?: number;
   } & Record<string, JsonValue>;
-  /** Read a PNG/JPEG/WebP/GIF file and return the image itself. Requires the current model to accept image input. */
+  /** Read a PNG/JPEG/WebP/GIF file and return the image itself. Requires the current model to accept image input, or a configured vision bridge that transcribes images for it. */
   read_image: {
     /** Path to the image file, resolved by the filesystem backend. */
     file_path: string;

@@ -4,7 +4,7 @@ English | [中文](README.zh.md)
 
 Consumer of `ctx.weixin` and `ctx.agents`: WeChat as a conversation with the harness agent. An inbound message wakes a dedicated agent, and the assistant text that closes that turn is sent straight back to whoever wrote in.
 
-The reply travels through this bridge rather than a tool, because the conversation has exactly one destination — the sender. The model therefore needs no WeChat vocabulary. Dormant while no account is linked, and the agent handle's failure never costs the WeChat connection.
+The reply travels through this bridge rather than a tool, because the conversation has exactly one destination — the sender. The model therefore needs no WeChat vocabulary. Dormant while no account is linked: the agent is created by the first inbound message, so a deployment that never links an account persists no session for WeChat. The agent handle's failure never costs the WeChat connection.
 
 ## Configuration
 

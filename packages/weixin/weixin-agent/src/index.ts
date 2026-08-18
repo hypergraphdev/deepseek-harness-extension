@@ -56,21 +56,26 @@ You speak in the user's name; route irreversible or outward-facing decisions bac
 
 /**
  * Bridge WeChat to one agent for the lifetime of `ctx`.
+ *
+ * The agent is created by the first inbound message, never at load: a
+ * message can only arrive once an account is linked, so a deployment that
+ * never links one persists no session for WeChat at all.
  * @param ctx - plugin context carrying `weixin`, `agents`, and `agentLoop`.
  * @param config - conversation identity and reply bounds.
  */
 export function apply(ctx: Context, config: Config): void {
-  let agent: Agent | undefined
-  let session: Session | undefined
-  /** The sender the current turn is answering, and their conversation token. */
-  let awaiting: { userId: string; contextToken?: string } | undefined
-  /** Assistant events already sent, so one turn's reply goes out once. */
-  let deliveredSeq = -1
-
   ctx.inject(['agents', 'agentLoop'], (agentCtx) => {
     let cancelled = false
+    /** Memoised creation, so concurrent messages wake one agent. */
+    let starting: Promise<{ agent: Agent; session: Session } | undefined> | undefined
+    let live: { agent: Agent; session: Session } | undefined
     let dispose: (() => Promise<void>) | undefined
-    void (async () => {
+    /** The sender the current turn is answering, and their conversation token. */
+    let awaiting: { userId: string; contextToken?: string } | undefined
+    /** Assistant events already sent, so one turn's reply goes out once. */
+    let deliveredSeq = -1
+
+    const start = async (): Promise<{ agent: Agent; session: Session } | undefined> => {
       try {
         // The prompt's {{model}}/{{provider}} variables read the agent's own
         // options, so an agent created without them fails prompt assembly;
@@ -97,61 +102,67 @@ export function apply(ctx: Context, config: Config): void {
         const handle = persisted === undefined
           ? await agentCtx.agents.create({ sessionId, meta: { cwd: process.cwd() }, ...shared })
           : await agentCtx.agents.resume({ resumeSessionId: sessionId, ...shared })
-        // oxlint-disable-next-line typescript/no-unnecessary-condition -- disposal can land while the agent is created
-        if (cancelled) { await handle.dispose(); return }
-        agent = handle.agent
-        session = handle.agent.session
+        if (cancelled) { await handle.dispose(); return undefined }
         dispose = () => handle.dispose()
+        live = { agent: handle.agent, session: handle.agent.session }
+        return live
       } catch (error: unknown) {
         ctx.logger.warn(`weixin-agent: agent unavailable: ${String(error)}`)
+        return undefined
       }
-    })()
+    }
+
+    // Inbound: one message becomes one turn for the agent.
+    agentCtx.on('weixin/message', (message) => {
+      // The user is waiting on a model turn; show the chat's typing dots
+      // until the reply lands.
+      void ctx.weixin.setTyping(message.fromUserId, true)
+      void (async () => {
+        const ready = await (starting ??= start())
+        if (ready === undefined || cancelled) {
+          await ctx.weixin.setTyping(message.fromUserId, false)
+          return
+        }
+        awaiting = {
+          userId: message.fromUserId,
+          ...(message.contextToken === undefined ? {} : { contextToken: message.contextToken }),
+        }
+        ready.agent.followup(createUserMessage({
+          content: [{ type: 'text', text: message.text }],
+          source: {
+            kind: 'plugin',
+            plugin: name,
+            form: 'notice',
+            summary: boundContextSummary(`WeChat message from ${message.fromUserId}`),
+          },
+        }))
+      })()
+    })
+
+    // Outbound: the text that closes a turn is the reply.
+    agentCtx.on('session/event', (subject, event) => {
+      if (live === undefined || subject !== live.session) return
+      if (event.type !== 'assistant/message' || event.seq <= deliveredSeq) return
+      const target = awaiting
+      if (target === undefined) return
+      const text = event.data.message.content
+        .flatMap(block => block.type === 'text' ? [block.text] : [])
+        .join('\n')
+        .trim()
+      if (text.length === 0) return
+      deliveredSeq = event.seq
+      const bounded = text.length > (config.replyMaxChars ?? 2_000)
+        ? `${text.slice(0, config.replyMaxChars ?? 2_000)}…`
+        : text
+      void ctx.weixin.send(target.userId, bounded, target.contextToken)
+        .catch((error: unknown) => { ctx.logger.warn(`weixin-agent: reply failed: ${String(error)}`) })
+        .finally(() => { void ctx.weixin.setTyping(target.userId, false) })
+    })
+
     agentCtx.effect(() => async () => {
       cancelled = true
-      agent = undefined
-      session = undefined
+      live = undefined
       if (dispose !== undefined) await dispose()
     }, 'weixin-agent.agent')
-  })
-
-  // Inbound: one message becomes one turn for the agent.
-  ctx.on('weixin/message', (message) => {
-    if (agent === undefined) return
-    awaiting = {
-      userId: message.fromUserId,
-      ...(message.contextToken === undefined ? {} : { contextToken: message.contextToken }),
-    }
-    // The user is waiting on a model turn; show the chat's typing dots
-    // until the reply lands.
-    void ctx.weixin.setTyping(message.fromUserId, true)
-    agent.followup(createUserMessage({
-      content: [{ type: 'text', text: message.text }],
-      source: {
-        kind: 'plugin',
-        plugin: name,
-        form: 'notice',
-        summary: boundContextSummary(`WeChat message from ${message.fromUserId}`),
-      },
-    }))
-  })
-
-  // Outbound: the text that closes a turn is the reply.
-  ctx.on('session/event', (subject, event) => {
-    if (session === undefined || subject !== session) return
-    if (event.type !== 'assistant/message' || event.seq <= deliveredSeq) return
-    const target = awaiting
-    if (target === undefined) return
-    const text = event.data.message.content
-      .flatMap(block => block.type === 'text' ? [block.text] : [])
-      .join('\n')
-      .trim()
-    if (text.length === 0) return
-    deliveredSeq = event.seq
-    const bounded = text.length > (config.replyMaxChars ?? 2_000)
-      ? `${text.slice(0, config.replyMaxChars ?? 2_000)}…`
-      : text
-    void ctx.weixin.send(target.userId, bounded, target.contextToken)
-      .catch((error: unknown) => { ctx.logger.warn(`weixin-agent: reply failed: ${String(error)}`) })
-      .finally(() => { void ctx.weixin.setTyping(target.userId, false) })
   })
 }
