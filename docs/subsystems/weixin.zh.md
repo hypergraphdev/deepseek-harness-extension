@@ -2,7 +2,7 @@
 
 [English](weixin.md) | 中文
 
-`@deepseek-ai/dsh-weixin` 经 iLink Bot 线协议持有一个扫码绑定的微信账号：绑定、持久凭据、派发 `weixin/message` 的接收循环与出站文本。服务在通过设置页扫码面板绑定账号之前保持休眠；`dsh-weixin-agent` 将入站消息桥接给专属 agent，其收尾文本即聊天回复。记录形态随服务本体维护（[`packages/weixin/weixin`](../../packages/weixin/weixin/README.md)）。
+`@deepseek-ai/dsh-weixin` 经 iLink Bot 线协议持有一个扫码绑定的微信账号：绑定、持久凭据、派发 `weixin/message` 的接收循环与出站文本。服务在通过设置页扫码面板绑定账号之前保持休眠；`dsh-weixin-agent` 将入站消息桥接给专属 agent，其收尾文本即聊天回复。记录形态随服务本体维护（[`packages/weixin/weixin`](../../packages/weixin/weixin/README.zh.md)）。
 
 <!-- BEGIN GENERATED cordis-surface (gen-cordis-catalog.ts) — do not edit between markers -->
 
@@ -10,7 +10,7 @@
 
 ## Cordis API
 
-Generated from source by `scripts/gen-cordis-catalog.ts` (verified fresh by `pnpm run verify-cordis-catalog` in doc-sync; regenerate with `pnpm run gen-cordis-catalog`) — this section is byte-identical in both language sides of the page. Signature blocks use a `ts cordis-catalog` fence and keep the original source JSDoc; dispatch modes are defined in the [primer](../cordis-primer.md#dispatch-modes), and the framework-inherited `ctx` API lives in [cordis-api/inherited.md](../cordis-api/inherited.md).
+Generated from source by `scripts/gen-cordis-catalog.ts` (verified fresh by `pnpm run verify-cordis-catalog` in doc-sync; regenerate with `pnpm run gen-cordis-catalog`) — the language sides differ only in locale-specific paired document paths. Signature blocks use a `ts cordis-catalog` fence and keep the original source JSDoc; dispatch modes are defined in the [primer](../cordis-primer.zh.md#dispatch-modes), and the framework-inherited `ctx` API lives in [cordis-api/inherited.md](../cordis-api/inherited.md).
 
 <a id="ctxweixin--weixinruntime"></a>
 
@@ -54,7 +54,7 @@ async send(toUserId: string, text: string, contextToken?: string): Promise<void>
 async setTyping(toUserId: string, typing: boolean): Promise<void>
 ```
 
-Source: [`packages/weixin/weixin/src/index.ts:90`](../../packages/weixin/weixin/src/index.ts)
+Source: [`packages/weixin/weixin/src/index.ts`](../../packages/weixin/weixin/src/index.ts)
 
 <a id="weixin-events"></a>
 
@@ -76,7 +76,7 @@ The link state changed: a scan completed, or the credential was dropped or rejec
 'weixin/link'(linked: boolean): void
 ```
 
-Source: [`packages/weixin/weixin/src/index.ts:45`](../../packages/weixin/weixin/src/index.ts)
+Source: [`packages/weixin/weixin/src/index.ts`](../../packages/weixin/weixin/src/index.ts)
 
 <a id="weixinmessage--emit"></a>
 
@@ -93,5 +93,5 @@ One inbound WeChat message, after the receive loop accepted it.
 'weixin/message'(message: InboundText): void
 ```
 
-Source: [`packages/weixin/weixin/src/index.ts:38`](../../packages/weixin/weixin/src/index.ts)
+Source: [`packages/weixin/weixin/src/index.ts`](../../packages/weixin/weixin/src/index.ts)
 <!-- END GENERATED cordis-surface -->

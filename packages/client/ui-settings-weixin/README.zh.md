@@ -2,13 +2,13 @@
 
 [English](README.md) | 中文
 
-微信设置区块：扫码关联一个账号，或解除已关联的账号。浏览器半侧把该区块注册进一个 `settings.section` 席位（由 [dsh-client-ui-settings](../ui-settings/README.md) 声明；id 为 `messaging`，order 为 40），并注册 `weixin` 语言包命名空间；node 半侧是空的 `apply`，仅让插件可以从 host cordis.yml 挂载，浏览器 bundle 经 package.json 的 `dsh.client` 声明被发现。
+微信设置区块：扫码关联一个账号，或解除已关联的账号。浏览器半侧把该区块注册进一个 `settings.section` 席位（由 [dsh-client-ui-settings](../ui-settings/README.zh.md) 声明；id 为 `messaging`，order 为 40），并注册 `weixin` 语言包命名空间；node 半侧是空的 `apply`，仅让插件可以从 host cordis.yml 挂载，浏览器 bundle 经 package.json 的 `dsh.client` 声明被发现。
 
-区块消费 host 的 `/api/weixin/status`、`/api/weixin/link` 与 `/api/weixin/unlink` 路由，由 [web-app bundle](../../bundle/web-app/README.md) 基于 [dsh-weixin](../../weixin/weixin/README.md) 的 `ctx.weixin` 服务提供。host 未组合微信能力时路由回答 404，区块渲染空内容。未关联账号时区块提供关联按钮；发起挑战后展示二维码，并每 2 秒轮询状态，直到扫码确认或挑战失效；已关联的账号展示其 id 与解除关联控件。二维码在面板内编码为内联 SVG——把登录 payload 发给图片服务，等于把扫码承载的凭证交给第三方——并为无法扫描的屏幕提供一个纯链接兜底。
+区块消费 host 的 `/api/weixin/status`、`/api/weixin/link` 与 `/api/weixin/unlink` 路由，由 [web-app bundle](../../bundle/web-app/README.zh.md) 基于 [dsh-weixin](../../weixin/weixin/README.zh.md) 的 `ctx.weixin` 服务提供。host 未组合微信能力时路由回答 404，区块渲染空内容。未关联账号时区块提供关联按钮；发起挑战后展示二维码，并每 2 秒轮询状态，直到扫码确认或挑战失效；已关联的账号展示其 id 与解除关联控件。二维码在面板内编码为内联 SVG——把登录 payload 发给图片服务，等于把扫码承载的凭证交给第三方——并为无法扫描的屏幕提供一个纯链接兜底。
 
 ## Model Experience
 
-间接影响，途径是它发出的 host 关联变更：账号一经关联，[dsh-weixin](../../weixin/weixin/README.md) 便会把微信消息投递给工作站智能体，模型可见的全部影响归该包所有。
+间接影响，途径是它发出的 host 关联变更：账号一经关联，[dsh-weixin](../../weixin/weixin/README.zh.md) 便会把微信消息投递给工作站智能体，模型可见的全部影响归该包所有。
 
 #### KV Cache 影响
 

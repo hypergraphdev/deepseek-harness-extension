@@ -2,5 +2,5 @@
 # side as of the last confirmed-consistent state. Both languages carry equal authority;
 # after editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write docs/subsystems/weixin.md
-weixin.md: 3d8a66e5b58d66d333f48734be82e3ffac71b078
-weixin.zh.md: 10f45b83410382ebc3c8ea43a633a289ba1f33cc
+weixin.md: 9b03a90505f503a8ab2bcce7798de4020cd585b8
+weixin.zh.md: a816aff3686bd023687103dd419482c6cbbb33d7

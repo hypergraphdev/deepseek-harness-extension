@@ -2,5 +2,5 @@
 # side as of the last confirmed-consistent state. Both languages carry equal authority;
 # after editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write docs/subsystems/hxa.md
-hxa.md: f1a4f8c31477fd403558e76a2ab3692290c2cdbc
-hxa.zh.md: fadd664e975c9d09b76898899c712a351c4e5f8a
+hxa.md: a7f49d073f77e037c06384e7d343778a51fe2422
+hxa.zh.md: 593a2c2a842065382c2398dd106871a646a16f63

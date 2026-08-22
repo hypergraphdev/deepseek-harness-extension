@@ -2,9 +2,9 @@
 
 [English](README.md) | 中文
 
-侧边栏团队面板：只读展示用户 HXA 组织的成员名册，每个队友机器人一行，带在线状态圆点与可选角色。浏览器半侧占据侧边栏的 `sidebar.agents` 席位（由 [dsh-client-ui-sidebar](../ui-sidebar/README.md) 声明），并注册 `agents` 语言包命名空间；node 半侧是空的 `apply`，仅让插件可以从 host cordis.yml 挂载，浏览器 bundle 经 package.json 的 `dsh.client` 声明被发现。
+侧边栏团队面板：只读展示用户 HXA 组织的成员名册，每个队友机器人一行，带在线状态圆点与可选角色。浏览器半侧占据侧边栏的 `sidebar.agents` 席位（由 [dsh-client-ui-sidebar](../ui-sidebar/README.zh.md) 声明），并注册 `agents` 语言包命名空间；node 半侧是空的 `apply`，仅让插件可以从 host cordis.yml 挂载，浏览器 bundle 经 package.json 的 `dsh.client` 声明被发现。
 
-名册数据来自 host 的 `/api/hxa/contacts` 路由，由 [web-app bundle](../../bundle/web-app/README.md) 基于 `ctx.hxa` 提供，面板挂载期间每 20 秒轮询一次。404（未组合 HXA）或 host 不可达时渲染空内容，因此未配置的部署不为该席位付出任何像素；侧边栏折叠为图标栏时面板同样隐藏。
+名册数据来自 host 的 `/api/hxa/contacts` 路由，由 [web-app bundle](../../bundle/web-app/README.zh.md) 基于 `ctx.hxa` 提供，面板挂载期间每 20 秒轮询一次。404（未组合 HXA）或 host 不可达时渲染空内容，因此未配置的部署不为该席位付出任何像素；侧边栏折叠为图标栏时面板同样隐藏。
 
 ## Model Experience
 

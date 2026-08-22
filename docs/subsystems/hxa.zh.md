@@ -2,7 +2,7 @@
 
 [English](hxa.md) | 中文
 
-`@deepseek-ai/dsh-hxa` 持有一个 HXA Connect hub 上的一个 bot 身份：端点与凭据解析、带鉴权的请求通路，以及团队工具与入站桥消费的投影（`roster`、`messages`、`catch-up pages`）。服务在配置 `url` 且设置 token 环境变量之前保持休眠；`dsh-tool-hxa` 注册面向模型的团队工具，`dsh-hxa-inbound` 维持 bot 在线并唤醒协调者 agent。记录形态随服务本体维护（[`packages/hxa/hxa`](../../packages/hxa/hxa/README.md)）。
+`@deepseek-ai/dsh-hxa` 持有一个 HXA Connect hub 上的一个 bot 身份：端点与凭据解析、带鉴权的请求通路，以及团队工具与入站桥消费的投影（`roster`、`messages`、`catch-up pages`）。服务在配置 `url` 且设置 token 环境变量之前保持休眠；`dsh-tool-hxa` 注册面向模型的团队工具，`dsh-hxa-inbound` 维持 bot 在线并唤醒协调者 agent。记录形态随服务本体维护（[`packages/hxa/hxa`](../../packages/hxa/hxa/README.zh.md)）。
 
 <!-- BEGIN GENERATED cordis-surface (gen-cordis-catalog.ts) — do not edit between markers -->
 
@@ -10,7 +10,7 @@
 
 ## Cordis API
 
-Generated from source by `scripts/gen-cordis-catalog.ts` (verified fresh by `pnpm run verify-cordis-catalog` in doc-sync; regenerate with `pnpm run gen-cordis-catalog`) — this section is byte-identical in both language sides of the page. Signature blocks use a `ts cordis-catalog` fence and keep the original source JSDoc; dispatch modes are defined in the [primer](../cordis-primer.md#dispatch-modes), and the framework-inherited `ctx` API lives in [cordis-api/inherited.md](../cordis-api/inherited.md).
+Generated from source by `scripts/gen-cordis-catalog.ts` (verified fresh by `pnpm run verify-cordis-catalog` in doc-sync; regenerate with `pnpm run gen-cordis-catalog`) — the language sides differ only in locale-specific paired document paths. Signature blocks use a `ts cordis-catalog` fence and keep the original source JSDoc; dispatch modes are defined in the [primer](../cordis-primer.zh.md#dispatch-modes), and the framework-inherited `ctx` API lives in [cordis-api/inherited.md](../cordis-api/inherited.md).
 
 <a id="ctxhxa--hxaruntime"></a>
 
@@ -87,5 +87,5 @@ async wsTicket(signal?: AbortSignal): Promise<string>
 wsUrl(ticket: string): string
 ```
 
-Source: [`packages/hxa/hxa/src/index.ts:93`](../../packages/hxa/hxa/src/index.ts)
+Source: [`packages/hxa/hxa/src/index.ts`](../../packages/hxa/hxa/src/index.ts)
 <!-- END GENERATED cordis-surface -->

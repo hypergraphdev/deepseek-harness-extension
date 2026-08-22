@@ -46,7 +46,7 @@ You speak in the user's name; route decisions that are irreversible or outward-f
 
 #### What the model sees
 
-生成的 [`hxa_contacts`、`hxa_inbox` 与 `hxa_send` schema](../../../docs/tool-catalog.md#deepseek-aidsh-tool-hxa)。结果以文本呈现：带在线状态的名册、自上次查看以来的收件摘要，以及发送确认。
+生成的 [`hxa_contacts`、`hxa_inbox` 与 `hxa_send` schema](../../../docs/tool-catalog.zh.md#deepseek-aidsh-tool-hxa)。结果以文本呈现：带在线状态的名册、自上次查看以来的收件摘要，以及发送确认。
 
 #### Token effect
 

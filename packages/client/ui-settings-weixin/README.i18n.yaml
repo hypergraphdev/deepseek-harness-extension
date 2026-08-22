@@ -3,4 +3,4 @@
 # after editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write packages/client/ui-settings-weixin/README.md
 README.md: 44a908ac1d27cf1ac851ef1deba720186232e4d9
-README.zh.md: 5533e4e110e8ac395835710a079ac28c334d0f44
+README.zh.md: 0c755e0802656f55e2a1638658f6c153755ee4a2

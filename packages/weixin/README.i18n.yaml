@@ -3,4 +3,4 @@
 # after editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write packages/weixin/README.md
 README.md: 4258754fa08dfb3799bc0824ab2cb2aaf4d52b0a
-README.zh.md: f7df48e45431806866000fa328c319a463e8d96c
+README.zh.md: 629b7bdbf8426d452ba9ebec936492a1022ffe57

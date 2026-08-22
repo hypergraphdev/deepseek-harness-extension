@@ -3,4 +3,4 @@
 # after editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write packages/hxa/tool-hxa/README.md
 README.md: b82798f382b87f5d3e4c67423dc6a03b858181d4
-README.zh.md: 26ae06b8195f6d820b9f51149af4d8cf9a8c99af
+README.zh.md: 877146e5dd107a1a7fe82762b79006f3e6338409
