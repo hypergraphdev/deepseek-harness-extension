@@ -141,11 +141,14 @@ export function resolveLanTrust(bindHost: string, extra: readonly string[]): Web
   return { lanAddresses, trustedHosts: [...lanAddresses, ...extra] }
 }
 
-/** Model-visible orientation and acceptance boundary for sessions created through `dsh web`. */
+/** Model-visible orientation, math-rendering subset, and acceptance boundary for sessions created through `dsh web`. */
 function webSurfacePrompt(webUrl: string): string {
   const updateContract = 'The client-plugin HMR receiver is active, but client-plugin changes reload without a refresh only while '
     + '`pnpm run dev:web` is also running from this same checkout to rebuild their bundles; verify that watcher before promising automatic updates. '
     + 'Every other change — the apps/web shell and plain packages — requires rebuilding the affected Web artifacts and verifying this existing URL after a page refresh. '
+  const mathContract = 'TeX you write is rendered by KaTeX, which accepts a subset of LaTeX: `\\label`, `\\ref`, `\\DeclareMathOperator`, and `\\intertext` are undefined, '
+    + 'and one display block carries at most one `\\tag`, so lines that each need their own label belong in `align` rather than `aligned`. '
+    + 'Whatever KaTeX cannot parse reaches the user as red source text in place of the formula. '
   return `You are interacting with the user through the DeepSeek Harness Web GUI at ${webUrl}. `
     + 'When the user refers to "this page", "this GUI", or "this app" without naming another target, they mean this GUI. '
     + 'Aside from active-browser-tab snapshot messages provided when the GUI is embedded in the dsh browser extension panel, '
@@ -153,7 +156,8 @@ function webSurfacePrompt(webUrl: string): string {
     + updateContract
     + 'Starting another server does not update this GUI. '
     + 'The apps/web Vite entry builds the shell but is not a standalone application because only dsh web injects window.__DSH_BOOT__. '
-    + 'Do not start a replacement server unless the user asks; if one is needed, use a managed background job and verify its exact URL.'
+    + 'Do not start a replacement server unless the user asks; if one is needed, use a managed background job and verify its exact URL. '
+    + mathContract
 }
 
 /** Resolve the canonical loopback URL from the active Web server. */

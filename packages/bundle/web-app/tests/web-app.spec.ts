@@ -142,6 +142,10 @@ describe('web-app runtime glue', () => {
     // The single update contract: the receiver is always on; no-refresh
     // reloads additionally need the rebuild watcher.
     expect(section?.text).toContain('pnpm run dev:web')
+    // The surface states the renderer's LaTeX subset, so a model does not emit
+    // TeX this GUI can only show as red source text.
+    expect(section?.text).toContain('KaTeX')
+    expect(section?.text).toContain('at most one `\\tag`')
     const webRuntime = contributions.find(contribution => contribution.name === 'web-runtime')
     expect(webRuntime?.resolve()).toEqual({ DSH_WEB_URL: 'http://127.0.0.1:4567' })
     await ctx.fiber.dispose()
